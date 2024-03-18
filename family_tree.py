@@ -59,7 +59,7 @@ class Person:
                     self.mother = family.add_person(record['mother_id'])
                 self.mother.add_child(self)
 
-    def __repr__(self):
+    def __str__(self):
         dates = self.dates()
         if dates:
             dates = f' ({dates})'
