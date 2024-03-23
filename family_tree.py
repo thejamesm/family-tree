@@ -148,6 +148,22 @@ class Person:
             tree['children'] = self.descendants()['children']
         return tree
 
+    def longest_ancestor_line(self):
+        father_line = (self.father.longest_ancestor_line() if self.father
+                       else [])
+        mother_line = (self.mother.longest_ancestor_line() if self.mother
+                       else [])
+        return max(father_line, mother_line, key=len) + [self]
+
+    def longest_descendant_line(self):
+        return [self] + max([child.longest_descendant_line()
+                             for child in self.children],
+                            default=[], key=len)
+
+    def longest_line(self):
+        return (self.longest_ancestor_line() +
+                self.longest_descendant_line()[1:])
+
 class Database:
     def __init__(self):
         self.config = load_config()
