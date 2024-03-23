@@ -270,7 +270,10 @@ class Database:
                     FROM people
                     WHERE person_name LIKE %s
                     ORDER BY person_id"""
-        return self.get_all_records(sql, id)[0]
+        result = self.get_all_records(sql, id)
+        if not result:
+            raise ValueError('Person not found.')
+        return result[0]
 
     def get_children(self, id):
         """Return a list of the children of a given person."""
