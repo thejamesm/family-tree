@@ -1,6 +1,7 @@
 import psycopg2
 import json
 from datetime import date
+from functools import cached_property
 
 from config import load_config
 
@@ -35,6 +36,7 @@ class Family:
 class Person:
     def __init__(self, id, family=None):
         if family:
+            self.family = family
             record = family.db.get_person(id)
         else:
             record = Database().get_person(id)
@@ -55,22 +57,9 @@ class Person:
         else:
             self.date_of_death = None
         self.place_of_death = record['place_of_death']
-        self.father = None
-        self.mother = None
+        self.__father_id = record['father_id']
+        self.__mother_id = record['mother_id']
         self.children = []
-        if family:
-            if record['father_id']:
-                if record['father_id'] in family.people:
-                    self.father = family.people[record['father_id']]
-                else:
-                    self.father = family.add_person(record['father_id'])
-                self.father.add_child(self)
-            if record['mother_id']:
-                if record['mother_id'] in family.people:
-                    self.mother = family.people[record['mother_id']]
-                else:
-                    self.mother = family.add_person(record['mother_id'])
-                self.mother.add_child(self)
 
     def __repr__(self):
         dates = self.dates()
@@ -79,6 +68,37 @@ class Person:
         else:
             dates = ''
         return self.name + dates
+
+    @cached_property
+    def father(self):
+        father_id = self.__father_id
+        if not father_id:
+            return None
+        if self.family:
+            if father_id not in self.family.people:
+                self.family.add_person(self.__father_id)
+            father = self.family.people[father_id]
+        else:
+            father = Person(father_id)
+        father.add_child(self)
+        return father
+
+    @cached_property
+    def mother(self):
+        mother_id = self.__mother_id
+        if not mother_id:
+            return None
+        if self.family:
+            if mother_id not in self.family.people:
+                self.family.add_person(self.__mother_id)
+            mother = self.family.people[mother_id]
+        else:
+            mother = Person(mother_id)
+        mother.add_child(self)
+        return mother
+
+    def add_child(self, child):
+        self.children.append(child)
 
     def json(self):
         tree = {
@@ -128,9 +148,6 @@ class Person:
         else:
             return None
 
-    def add_child(self, child):
-        self.children.append(child)
-    
     def ancestors(self):
         tree = {'person': self}
         if self.father:
