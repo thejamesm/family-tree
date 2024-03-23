@@ -35,12 +35,15 @@ class Family:
 
 class Person:
     def __init__(self, id, family=None):
+        self.id = id
+        self.family = family
+
         if family:
-            self.family = family
             record = family.db.get_person(id)
+            family.people[id] = self
         else:
             record = Database().get_person(id)
-        self.id = id
+
         self.name = record['person_name']
         self.gender = record['gender']
         self.dob = record['date_of_birth']
@@ -75,8 +78,7 @@ class Person:
         if not father_id:
             return None
         if self.family:
-            if father_id not in self.family.people:
-                self.family.add_person(self.__father_id)
+            self.family.add_person(self.__father_id)
             father = self.family.people[father_id]
         else:
             father = Person(father_id)
@@ -89,8 +91,7 @@ class Person:
         if not mother_id:
             return None
         if self.family:
-            if mother_id not in self.family.people:
-                self.family.add_person(self.__mother_id)
+            self.family.add_person(self.__mother_id)
             mother = self.family.people[mother_id]
         else:
             mother = Person(mother_id)
