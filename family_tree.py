@@ -36,18 +36,21 @@ class Person:
             record = Database().get_person(id)
         self.id = id
         self.name = record['person_name']
+        self.gender = record['gender']
         self.dob = record['date_of_birth']
         self.dob_prec = record['date_of_birth_precision']
         if self.dob:
             self.date_of_birth = '-'.join(self.dob.split('-')[:self.dob_prec])
         else:
             self.date_of_birth = None
+        self.place_of_birth = record['place_of_birth']
         self.dod = record['date_of_death']
         self.dod_prec = record['date_of_death_precision']
         if self.dod:
             self.date_of_death = '-'.join(self.dod.split('-')[:self.dod_prec])
         else:
             self.date_of_death = None
+        self.place_of_death = record['place_of_death']
         self.father = None
         self.mother = None
         self.children = []
