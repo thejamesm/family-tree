@@ -12,7 +12,7 @@ class Family:
 
     def add_person(self, id):
         if id not in self.people:
-            self.people[id] = Person(id, self)
+            return Person(id, self)
         return self.people[id]
 
     def add_all(self):
@@ -39,7 +39,6 @@ class Person:
 
         if family:
             record = family.db.get_person(id)
-            family.people[id] = self
         else:
             record = Database().get_person(id)
 
@@ -62,6 +61,9 @@ class Person:
         self.place_of_death = record['place_of_death']
         self.__father_id = record['father_id']
         self.__mother_id = record['mother_id']
+        
+        if family:
+            family.people[self.id] = self
 
     def __repr__(self):
         dates = self.dates()
