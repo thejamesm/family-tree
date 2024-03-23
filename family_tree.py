@@ -28,6 +28,10 @@ class Family:
             json.dump(list(self.people.values()), f, cls=PersonEncoder,
                       indent=4, ensure_ascii=False)
 
+    def longest_line(self):
+        return max([person.longest_line() for person in self.people.values()],
+                   key=len)
+
 class Person:
     def __init__(self, id, family=None):
         if family:
