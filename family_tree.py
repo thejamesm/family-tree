@@ -285,7 +285,10 @@ class Database:
                    FROM people
                   WHERE %s IN (father_id, mother_id)
                   ORDER BY person_id"""
-        return tuple(x['person_id'] for x in self.get_all_records(sql, id))
+        records = self.get_all_records(sql, id)
+        if not records:
+            return tuple()
+        return tuple(x['person_id'] for x in records)
 
     def get_line(self, id):
         """Return all ancestors and descendants of a given person."""
