@@ -62,7 +62,6 @@ class Person:
         self.place_of_death = record['place_of_death']
         self.__father_id = record['father_id']
         self.__mother_id = record['mother_id']
-        self.children = []
 
     def __repr__(self):
         dates = self.dates()
@@ -82,7 +81,6 @@ class Person:
             father = self.family.people[father_id]
         else:
             father = Person(father_id)
-        father.add_child(self)
         return father
 
     @cached_property
@@ -95,11 +93,17 @@ class Person:
             mother = self.family.people[mother_id]
         else:
             mother = Person(mother_id)
-        mother.add_child(self)
         return mother
 
-    def add_child(self, child):
-        self.children.append(child)
+    @cached_property
+    def children(self):
+        child_ids = Database().get_child_ids(self.id)
+        if self.family:
+            children = [self.family.add_person(child_id)
+                        for child_id in child_ids]
+        else:
+            children = [Person(child_id) for child_id in child_ids]
+        return children
 
     def json(self):
         tree = {
@@ -274,6 +278,14 @@ class Database:
                     OR mother_id = %s
                 ORDER BY date_of_birth"""
         return self.get_all_records(sql, (id, id))
+
+    def get_child_ids(self, id):
+        """Return a list of the IDs of the children of a specified person."""
+        sql = """SELECT person_id
+                   FROM people
+                  WHERE %s IN (father_id, mother_id)
+                  ORDER BY person_id"""
+        return tuple(x['person_id'] for x in self.get_all_records(sql, id))
 
     def get_line(self, id):
         """Return all ancestors and descendants of a given person."""
