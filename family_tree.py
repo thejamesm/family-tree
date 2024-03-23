@@ -17,6 +17,7 @@ class Family:
     def add_all(self):
         for id in self.db.get_ids():
             self.add_person(id)
+        self.people = dict(sorted(self.people.items()))
 
     def search(self, search_string):
         return {p[0]: p[1] for p in self.people.items()
