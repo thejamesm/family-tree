@@ -95,18 +95,18 @@ class Person:
         if self.mother:
             tree['mother'] = self.mother.ancestors()
         return tree
-    
-    def descendents(self):
+
+    def descendants(self):
         tree = {'person': self}
         if self.children:
-            tree['children'] = [child.descendents()
+            tree['children'] = [child.descendants()
                                 for child in self.children]
         return tree
 
     def line(self):
         tree = self.ancestors()
         if self.children:
-            tree['children'] = self.descendents()['children']
+            tree['children'] = self.descendants()['children']
         return tree
 
 class Database:
@@ -199,7 +199,7 @@ class Database:
         return self.get_all_records(sql, (id, id))
 
     def get_line(self, id):
-        """Return all ancestors and descendents of a given person."""
+        """Return all ancestors and descendants of a given person."""
         person = self.get_person(id)
         if person['father_id']:
             person['father'] = self.get_ancestors(person['father_id'])
@@ -208,25 +208,25 @@ class Database:
         person['children'] = []
         children = self.get_children(id)
         for child in children:
-            person['children'].append(self.get_descendents(child['person_id']))
+            person['children'].append(self.get_descendants(child['person_id']))
         return person
 
-    def get_descendents(self, id):
-        """Return all descendents of a given person
+    def get_descendants(self, id):
+        """Return all descendants of a given person
            nested within their parents."""
         person = self.get_person(id)
         person['children'] = []
         children = self.get_children(id)
         for child in children:
-            person['children'].append(self.get_descendents(child['person_id']))
+            person['children'].append(self.get_descendants(child['person_id']))
         return person
 
-    def get_descendents_flat(self, id):
-        """Return all descendents of a given person as a flat list."""
+    def get_descendants_flat(self, id):
+        """Return all descendants of a given person as a flat list."""
         children = self.get_children(id)
         line = children
         for child in children:
-            line.extend(self.get_descendents_flat(child['person_id']))
+            line.extend(self.get_descendants_flat(child['person_id']))
         return line
 
     def get_ancestors(self, id):
