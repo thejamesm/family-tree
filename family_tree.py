@@ -23,6 +23,11 @@ class Family:
         return {p[0]: p[1] for p in self.people.items()
                 if search_string in p[1].name}
 
+    def save(self):
+        with open(r'family_tree.json', mode='w', encoding='utf-8') as f:
+            json.dump(list(self.people.values()), f, cls=PersonEncoder,
+                      indent=4, ensure_ascii=False)
+
 class Person:
     def __init__(self, id, family=None):
         if family:
@@ -68,6 +73,43 @@ class Person:
             dates = ''
         return self.name + dates
 
+    def json(self):
+        tree = {
+                'id': self.id,
+                'name': self.name,
+                'gender': self.gender,
+                'date_of_birth': self.date_of_birth,
+                'date_of_death': self.date_of_death,
+                'place_of_birth': self.place_of_birth,
+                'place_of_death': self.place_of_death,
+                'father': None,
+                'mother': None,
+                'children': [str(child) for child in self.children]
+            }
+        if self.father:
+            tree['father'] = str(self.father)
+        if self.mother:
+            tree['mother'] = str(self.mother)
+        return tree
+
+    def json_flat(self):
+        tree = {
+                'id': self.id,
+                'name': self.name,
+                'gender': self.gender,
+                'date_of_birth': self.date_of_birth,
+                'date_of_death': self.date_of_death,
+                'place_of_birth': self.place_of_birth,
+                'place_of_death': self.place_of_death,
+                'father_id': None,
+                'mother_id': None,
+                'child_ids': [child.id for child in self.children]
+            }
+        if self.father:
+            tree['father_id'] = self.father.id
+        if self.mother:
+            tree['mother_id'] = self.mother.id
+        return tree
 
     def dates(self):
         if self.date_of_birth and self.date_of_death:
@@ -242,6 +284,33 @@ class Database:
         if person['mother_id']:
             line.extend(self.get_ancestors_flat(person['mother_id']))
         return line
+
+class PersonEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Person):
+            person = {
+                    'id': obj.id,
+                    'name': obj.name,
+                    'gender': obj.gender,
+                    'date_of_birth': obj.date_of_birth,
+                    'place_of_birth': obj.place_of_birth,
+                    'date_of_death': obj.date_of_death,
+                    'place_of_death': obj.place_of_death,
+                    'father_id': None,
+                    'father': None,
+                    'mother_id': None,
+                    'mother': None,
+                    'children': [{'child_id': child.id, 'child': str(child)}
+                                 for child in obj.children]
+                }
+            if obj.father:
+                person['father_id'] = obj.father.id
+                person['father'] = str(obj.father)
+            if obj.mother:
+                person['mother_id'] = obj.mother.id
+                person['mother'] = str(obj.mother)
+            return person
+        return super().default(obj)
 
 if __name__ == '__main__':
     family = Family()
