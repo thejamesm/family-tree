@@ -35,7 +35,6 @@ class Family:
 
 class Person:
     def __init__(self, id, family=None):
-        self.id = id
         self.family = family
 
         if family:
@@ -44,6 +43,7 @@ class Person:
         else:
             record = Database().get_person(id)
 
+        self.id = record['person_id']
         self.name = record['person_name']
         self.gender = record['gender']
         self.dob = record['date_of_birth']
