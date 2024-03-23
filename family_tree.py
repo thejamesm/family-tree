@@ -60,21 +60,14 @@ class Person:
                     self.mother = family.add_person(record['mother_id'])
                 self.mother.add_child(self)
 
-    def __str__(self):
+    def __repr__(self):
         dates = self.dates()
         if dates:
             dates = f' ({dates})'
         else:
             dates = ''
-        output = [self.name + dates]
-        #if self.father:
-        #    output.append('Father: ' + self.father.name)
-        #if self.mother:
-        #    output.append('Mother: ' + self.mother.name)
-        #if self.children:
-        #    output.append('Children: ' +
-        #                  ', '.join([c.name for c in self.children]))
-        return '\n'.join(output)
+        return self.name + dates
+
 
     def dates(self):
         if self.date_of_birth and self.date_of_death:
