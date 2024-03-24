@@ -13,7 +13,7 @@ class Family:
         self.people = {}
         self.db = Database()
 
-    def add_person(self, person):
+    def person(self, person):
         if type(person) is Person:
             id = person.id
             if id not in self.people:
@@ -60,8 +60,8 @@ class Family:
             return common_ancestor, shorter_leg, difference
 
         self.add_all()
-        person_a = self.add_person(person_a)
-        person_b = self.add_person(person_b)
+        person_a = self.person(person_a)
+        person_b = self.person(person_b)
 
         if person_a is person_b:
             return person_a, 0, 0
@@ -200,8 +200,7 @@ class Person:
         if not father_id:
             return None
         if self.family:
-            self.family.add_person(self._father_id)
-            father = self.family.people[father_id]
+            father = self.family.person(self._father_id)
         else:
             father = Person(father_id)
         return father
@@ -212,8 +211,7 @@ class Person:
         if not mother_id:
             return None
         if self.family:
-            self.family.add_person(self._mother_id)
-            mother = self.family.people[mother_id]
+            mother = self.family.person(self._mother_id)
         else:
             mother = Person(mother_id)
         return mother
@@ -231,7 +229,7 @@ class Person:
     def children(self):
         child_ids = Database().get_child_ids(self.id)
         if self.family:
-            children = [self.family.add_person(child_id)
+            children = [self.family.person(child_id)
                         for child_id in child_ids]
         else:
             children = [Person(child_id) for child_id in child_ids]
