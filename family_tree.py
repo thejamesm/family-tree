@@ -13,7 +13,7 @@ class Family:
 
     def add_person(self, id):
         if id not in self.people:
-            return Person(id, self)
+            return Person(id, family=self)
         return self.people[id]
 
     def add_all(self):
