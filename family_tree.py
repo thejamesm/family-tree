@@ -66,12 +66,23 @@ class Person:
             family.people[self.id] = self
 
     def __repr__(self):
-        dates = self.dates()
+        dates = self.dates
         if dates:
             dates = f' ({dates})'
         else:
             dates = ''
         return self.name + dates
+
+    @cached_property
+    def dates(self):
+        if self.date_of_birth and self.date_of_death:
+            return f'{self.date_of_birth} - {self.date_of_death}'
+        elif self.date_of_birth:
+            return f'b. {self.date_of_birth}'
+        elif self.date_of_death:
+            return f'd. {self.date_of_death}'
+        else:
+            return None
 
     @cached_property
     def father(self):
@@ -144,16 +155,6 @@ class Person:
         if self.mother:
             tree['mother_id'] = self.mother.id
         return tree
-
-    def dates(self):
-        if self.date_of_birth and self.date_of_death:
-            return f'{self.date_of_birth} - {self.date_of_death}'
-        elif self.date_of_birth:
-            return f'b. {self.date_of_birth}'
-        elif self.date_of_death:
-            return f'd. {self.date_of_death}'
-        else:
-            return None
 
     def ancestors(self):
         tree = {'person': self}
