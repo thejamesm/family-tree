@@ -38,13 +38,14 @@ class Person:
     _pattern_parts = (('%#d', '%B', '%Y') if os.name == 'nt'
                       else ('%-d', '%B', '%Y'))
 
-    def __init__(self, id, family=None):
+    def __init__(self, id=None, *, record=None, family=None):
         self.family = family
 
-        if family:
-            record = family.db.get_person(id)
-        else:
-            record = Database().get_person(id)
+        if record is None:
+            if family:
+                record = family.db.get_person(id)
+            else:
+                record = Database().get_person(id)
 
         self.id = record['person_id']
         self.name = record['person_name']
