@@ -1,5 +1,6 @@
 import psycopg2
 import json
+import os
 from datetime import date
 from functools import cached_property
 
@@ -34,6 +35,9 @@ class Family:
                    key=len)
 
 class Person:
+    _pattern_parts = (('%#d', '%B', '%Y') if os.name == 'nt'
+                      else ('%-d', '%B', '%Y'))
+
     def __init__(self, id, family=None):
         self.family = family
 
@@ -45,20 +49,33 @@ class Person:
         self.id = record['person_id']
         self.name = record['person_name']
         self.gender = record['gender']
-        self.dob = record['date_of_birth']
+
+        _dob = record['date_of_birth']
         self.dob_prec = record['date_of_birth_precision']
-        if self.dob:
-            self.date_of_birth = '-'.join(self.dob.split('-')[:self.dob_prec])
+        if _dob:
+            self.dob = date.fromisoformat(_dob)
+            dob_pattern = ' '.join(Person._pattern_parts[3 - self.dob_prec:])
+            self.date_of_birth = date.strftime(self.dob, dob_pattern)
+            self.year_of_birth = self.dob.year
         else:
+            self.dob = None
             self.date_of_birth = None
+            self.year_of_birth = None
         self.place_of_birth = record['place_of_birth']
-        self.dod = record['date_of_death']
+
+        _dod = record['date_of_death']
         self.dod_prec = record['date_of_death_precision']
-        if self.dod:
-            self.date_of_death = '-'.join(self.dod.split('-')[:self.dod_prec])
+        if _dod:
+            self.dod = date.fromisoformat(_dod)
+            dod_pattern = ' '.join(Person._pattern_parts[3 - self.dod_prec:])
+            self.date_of_death = date.strftime(self.dod, dod_pattern)
+            self.year_of_death = self.dod.year
         else:
+            self.dod = None
             self.date_of_death = None
+            self.year_of_death = None
         self.place_of_death = record['place_of_death']
+
         self.occupation = record['occupation']
         self.notes = record['notes']
         self._father_id = record['father_id']
@@ -68,23 +85,44 @@ class Person:
             family.people[self.id] = self
 
     def __repr__(self):
-        dates = self.dates
-        if dates:
-            dates = f' ({dates})'
+        years = self.years
+        if years:
+            years = f' ({years})'
         else:
-            dates = ''
-        return self.name + dates
+            years = ''
+        return self.name + years
 
     @cached_property
     def dates(self):
         if self.date_of_birth and self.date_of_death:
-            return f'{self.date_of_birth} - {self.date_of_death}'
+            return f'{self.date_of_birth} – {self.date_of_death}'
         elif self.date_of_birth:
             return f'b. {self.date_of_birth}'
         elif self.date_of_death:
             return f'd. {self.date_of_death}'
         else:
             return None
+
+    @cached_property
+    def years(self):
+        if self.year_of_birth and self.year_of_death:
+            return f'{self.year_of_birth} – {self.year_of_death}'
+        elif self.year_of_birth:
+            return f'b. {self.year_of_birth}'
+        elif self.year_of_death:
+            return f'd. {self.year_of_death}'
+        else:
+            return None
+
+    @cached_property
+    def born(self):
+        return ' in '.join(filter(None,
+                                  (self.date_of_birth, self.place_of_birth)))
+
+    @cached_property
+    def died(self):
+        return ' in '.join(filter(None,
+                                  (self.date_of_death, self.place_of_death)))
 
     @cached_property
     def father(self):
