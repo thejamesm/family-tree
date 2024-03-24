@@ -239,7 +239,7 @@ class Database:
         """Return a list of all active IDs in the `people` table."""
         sql = """SELECT person_id
                 FROM people
-                ORDER BY person_id"""
+                ORDER BY person_id;"""
         return tuple(x['person_id'] for x in self.get_all_records(sql))
 
     def get_people(self, match=None):
@@ -251,11 +251,11 @@ class Database:
             sql = """SELECT *
                     FROM people
                     WHERE person_name LIKE %s
-                    ORDER BY person_id"""
+                    ORDER BY person_id;"""
         else:
             sql = """SELECT *
                     FROM people
-                    ORDER BY person_id"""
+                    ORDER BY person_id;"""
         return self.get_all_records(sql, match)
 
     def get_person(self, id):
@@ -263,13 +263,13 @@ class Database:
         if type(id) is int or (type(id) is str and id.isnumeric()):
             sql = """SELECT *
                     FROM people
-                    WHERE person_id = %s"""
+                    WHERE person_id = %s;"""
         else:
             id = f'%{id}%'
             sql = """SELECT *
                     FROM people
                     WHERE person_name LIKE %s
-                    ORDER BY person_id"""
+                    ORDER BY person_id;"""
         result = self.get_all_records(sql, id)
         if not result:
             raise ValueError('Person not found.')
@@ -281,7 +281,7 @@ class Database:
                 FROM people
                 WHERE father_id = %s
                     OR mother_id = %s
-                ORDER BY date_of_birth"""
+                ORDER BY date_of_birth;"""
         return self.get_all_records(sql, (id, id))
 
     def get_child_ids(self, id):
@@ -289,7 +289,7 @@ class Database:
         sql = """SELECT person_id
                    FROM people
                   WHERE %s IN (father_id, mother_id)
-                  ORDER BY person_id"""
+                  ORDER BY person_id;"""
         records = self.get_all_records(sql, id)
         if not records:
             return tuple()
