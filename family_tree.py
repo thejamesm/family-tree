@@ -59,6 +59,8 @@ class Person:
         else:
             self.date_of_death = None
         self.place_of_death = record['place_of_death']
+        self.occupation = record['occupation']
+        self.notes = record['notes']
         self.__father_id = record['father_id']
         self.__mother_id = record['mother_id']
         
