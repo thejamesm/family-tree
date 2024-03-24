@@ -109,6 +109,15 @@ class Person:
         return mother
 
     @cached_property
+    def parents(self):
+        parents = []
+        if self.father:
+            parents.append(self.father)
+        if self.mother:
+            parents.append(self.mother)
+        return tuple(parents)
+
+    @cached_property
     def children(self):
         child_ids = Database().get_child_ids(self.id)
         if self.family:
