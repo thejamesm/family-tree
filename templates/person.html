@@ -1,0 +1,66 @@
+{% macro person_link(person) -%}
+    <a href="{{ url_for('person_page', id=person.id) }}">{{ person.name }}</a>
+    {%- if person.dates %} ({{ person.years }}){% endif -%}
+{%- endmacro -%}
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{ person.name }}</title>
+    </head>
+    <body>
+        <h1>{{ person.name }}</h1>
+        {% if person.dates -%}
+        <h2>{{ person.dates }}</h2>
+        {% endif -%}
+        <table>
+            {%- if person.born %}
+            <tr>
+                <td>Born</td>
+                <td>{{ person.born }}</td>
+            </tr>
+            {%- endif -%}
+            {%- if person.died %}
+            <tr>
+                <td>Died</td>
+                <td>{{ person.died }}</td>
+            </tr>
+            {%- endif -%}
+            {%- if person.occupation %}
+            <tr>
+                <td>Occupation</td>
+                <td>{{ person.occupation }}</td>
+            </tr>
+            {%- endif -%}
+            {%- if person.father %}
+            <tr>
+                <td>Father</td>
+                <td>{{ person_link(person.father) }}</td>
+            </tr>
+            {%- endif -%}
+            {%- if person.mother %}
+            <tr>
+                <td>Mother</td>
+                <td>{{ person_link(person.mother) }}</td>
+            </tr>
+            {%- endif -%}
+            {%- if person.children %}
+            <tr>
+                <td>Children</td>
+                <td>
+                    <ul>
+                        {%- for child in person.children %}
+                        <li>{{ person_link(child) }}</li>
+                        {%- endfor %}
+                    </ul>
+                </td>
+            </tr>
+            {%- endif -%}
+            {%- if person.notes %}
+            <tr>
+                <td>Notes</td>
+                <td>{{ person.notes }}</td>
+            </tr>
+            {%- endif %}
+        </table>
+    </body>
+</html>
