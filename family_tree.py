@@ -11,9 +11,17 @@ class Family:
         self.people = {}
         self.db = Database()
 
-    def add_person(self, id):
-        if id not in self.people:
-            return Person(id, family=self)
+    def add_person(self, person):
+        if type(person) is Person:
+            id = person.id
+            if id not in self.people:
+                self.people[id] = person
+                person.family = self
+        else:
+            id = person
+            if id not in self.people:
+                Person(id, family=self)
+        self.people = dict(sorted(self.people.items()))
         return self.people[id]
 
     def add_all(self):
