@@ -61,8 +61,8 @@ class Person:
         self.place_of_death = record['place_of_death']
         self.occupation = record['occupation']
         self.notes = record['notes']
-        self.__father_id = record['father_id']
-        self.__mother_id = record['mother_id']
+        self._father_id = record['father_id']
+        self._mother_id = record['mother_id']
         
         if family:
             family.people[self.id] = self
@@ -88,11 +88,11 @@ class Person:
 
     @cached_property
     def father(self):
-        father_id = self.__father_id
+        father_id = self._father_id
         if not father_id:
             return None
         if self.family:
-            self.family.add_person(self.__father_id)
+            self.family.add_person(self._father_id)
             father = self.family.people[father_id]
         else:
             father = Person(father_id)
@@ -100,11 +100,11 @@ class Person:
 
     @cached_property
     def mother(self):
-        mother_id = self.__mother_id
+        mother_id = self._mother_id
         if not mother_id:
             return None
         if self.family:
-            self.family.add_person(self.__mother_id)
+            self.family.add_person(self._mother_id)
             mother = self.family.people[mother_id]
         else:
             mother = Person(mother_id)
