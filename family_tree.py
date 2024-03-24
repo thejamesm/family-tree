@@ -4,6 +4,8 @@ import os
 from datetime import date
 from functools import cached_property
 
+import inflect
+
 from config import load_config
 
 class Family:
@@ -41,6 +43,60 @@ class Family:
     def longest_line(self):
         return max([person.longest_line() for person in self.people.values()],
                    key=len)
+
+    def kinship(self, person_a, person_b):
+        def search_nested(needle, haystack):
+            gen = (x[0] for x in enumerate(haystack) if needle in x[1])
+            return next(gen, None)
+
+        def all_parents(layer):
+            return tuple(parent for x in layer
+                         for parent in (x.father, x.mother)
+                         if parent is not None)
+
+        def calculate_kinship(common_ancestor, a_depth, b_depth):
+            shorter_leg = min(a_depth, b_depth)
+            difference = a_depth - b_depth
+            return common_ancestor, shorter_leg, difference
+
+        self.add_all()
+        person_a = self.add_person(person_a)
+        person_b = self.add_person(person_b)
+
+        if person_a is person_b:
+            return person_a, 0, 0
+
+        a_ancs = [(person_a,)]
+        b_ancs = [(person_b,)]
+        a_done = False
+        b_done = False
+
+        while not (a_done and b_done):
+            if not a_done:
+                if a_parents := all_parents(a_ancs[-1]):
+                    a_ancs.append(a_parents)
+                else:
+                    a_done = True
+
+            if not b_done:
+                if b_parents := all_parents(b_ancs[-1]):
+                    b_ancs.append(b_parents)
+                else:
+                    b_done = True
+
+            if not a_done:
+                for ancestor in a_parents:
+                    if (b_depth := search_nested(ancestor, b_ancs)) is not None:
+                        a_depth = len(a_ancs) - 1
+                        return calculate_kinship(ancestor, a_depth, b_depth)
+
+            if not b_done:
+                for ancestor in b_parents:
+                    if (a_depth := search_nested(ancestor, a_ancs)) is not None:
+                        b_depth = len(b_ancs) - 1
+                        return calculate_kinship(ancestor, a_depth, b_depth)
+
+        return None
 
 class Person:
     @classmethod
@@ -94,7 +150,7 @@ class Person:
         self.notes = record['notes']
         self._father_id = record['father_id']
         self._mother_id = record['mother_id']
-        
+
         if family:
             family.people[self.id] = self
 
@@ -255,6 +311,101 @@ class Person:
     def longest_line(self):
         return (self.longest_ancestor_line() +
                 self.longest_descendant_line()[1:])
+
+    def kinship_term(self, person):
+        def calc_term(short, diff, gender):
+            match short, diff, gender:
+                case 0, 0, _:
+                    return 'self'
+                case 1, 0, 'male':
+                    return 'brother'
+                case 1, 0, 'female':
+                    return 'sister'
+                case 1, 0, _:
+                    return 'sibling'
+                case 0, 1, 'male':
+                    return 'father'
+                case 0, 1, 'female':
+                    return 'mother'
+                case 0, 1, _:
+                    return 'parent'
+                case 0, -1, 'male':
+                    return 'son'
+                case 0, -1, 'female':
+                    return 'daughter'
+                case 0, -1, _:
+                    return 'child'
+                case 1, 1, 'male':
+                    return 'uncle'
+                case 1, 1, 'female':
+                    return 'aunt'
+                case 1, 1, _:
+                    return 'parent’s sibling'
+                case 1, -1, 'male':
+                    return 'nephew'
+                case 1, -1, 'female':
+                    return 'niece'
+                case 1, -1, _:
+                    return 'sibling’s child'
+                case 0, 2, 'male':
+                    return 'grandfather'
+                case 0, 2, 'female':
+                    return 'grandmother'
+                case 0, 2, _:
+                    return 'grandparent'
+                case 0, -2, 'male':
+                    return 'grandson'
+                case 0, -2, 'female':
+                    return 'granddaughter'
+                case 0, -2, _:
+                    return 'grandchild'
+                case 1, 2, 'male':
+                    return 'great uncle'
+                case 1, 2, 'female':
+                    return 'great aunt'
+                case 1, 2, _:
+                    return 'grandparent’s sibling'
+                case 1, -2, 'male':
+                    return 'great nephew'
+                case 1, -2, 'female':
+                    return 'great niece'
+                case 1, -2, _:
+                    return 'sibling’s grandchild'
+                case 2, 0, _:
+                    return 'cousin'
+            return None
+
+        if not (family := self.family):
+            family = Family()
+        kinship = family.kinship(self, person)
+        if not kinship:
+            return 'no blood relation'
+        _, short, diff = kinship
+        
+        if term := calc_term(short, diff, person.gender):
+            return term
+
+        if short in (0, 1):
+            levels = abs(diff) - 2
+            prefix = '-'.join(('great',) * levels) + ' grand'
+            sign = 1 if diff > 0 else -1
+            return prefix + calc_term(short, sign, person.gender)
+
+        p = inflect.engine()
+        term = p.number_to_words(p.ordinal(short-1)) + ' cousin'
+        if diff:
+            diff = abs(diff)
+            match diff:
+                case 1:
+                    removal = 'once'
+                case 2:
+                    removal = 'twice'
+                case 3:
+                    removal = 'thrice'
+                case _:
+                    removal = p.number_to_words(diff) + ' times'
+            term = f'{term} {removal} removed'
+        return term
 
 class Database:
     def __init__(self):
