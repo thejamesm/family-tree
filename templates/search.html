@@ -1,0 +1,23 @@
+{% from 'macros.html' import person_link -%}
+{% macro title() -%}
+    Search {%- if results %} Results {%- endif %}
+{%- endmacro -%}
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{ title() }}</title>
+    </head>
+    <body>
+        <h1>{{ title() }}</h1>
+        <form>
+            <label for="query">Search:</label>
+            <input type="text" name="query" id="query">
+            <input type="submit">
+        </form>
+        <ul>
+        {%- for result in results %}
+            <li>{{ person_link(result) }}</li>
+        {%- endfor %}
+        </ul>
+    </body>
+</html>
