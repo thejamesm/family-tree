@@ -1,7 +1,4 @@
-{% macro person_link(person) -%}
-    <a href="{{ url_for('person_page', id=person.id) }}">{{ person.name }}</a>
-    {%- if person.dates %} ({{ person.years }}){% endif -%}
-{%- endmacro -%}
+{% from 'macros.html' import person_link -%}
 <!DOCTYPE html>
 <html>
     <head>
