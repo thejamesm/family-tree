@@ -1,0 +1,13 @@
+{% from 'macros.html' import person_link -%}
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{ person_a.name }}—{{ person_b.name }}</title>
+    </head>
+    <body>
+        <p>
+            {{ person_link(person_b) }} is {{ person_link(person_a) }}’s
+            {{ kinship }}
+        </p>
+    </body>
+</html>

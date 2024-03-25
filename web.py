@@ -22,3 +22,14 @@ def person_page(id):
         img_filename = None
     return render_template('person.html', person=person,
                            img_filename=img_filename)
+
+@app.route('/<int:id_a>/<int:id_b>')
+def relatives(id_a, id_b):
+    family = Family()
+    family.add_all()
+    person_a = family.person(id_a)
+    person_b = family.person(id_b)
+    kinship = person_a.kinship_term(person_b)
+    return render_template('relatives.html',
+                           person_a=person_a, person_b=person_b,
+                           kinship=kinship)
