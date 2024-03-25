@@ -135,11 +135,16 @@ class Person:
 
         _dod = record['date_of_death']
         self.dod_prec = record['date_of_death_precision']
+        self.dod_unknown = record['date_of_death_unknown']
         if _dod:
             self.dod = date.fromisoformat(_dod)
             dod_pattern = ' '.join(Person._pattern_parts[3 - self.dod_prec:])
             self.date_of_death = date.strftime(self.dod, dod_pattern)
             self.year_of_death = self.dod.year
+        elif self.dod_unknown:
+            self.dod = None
+            self.date_of_death = 'unknown'
+            self.year_of_death = None
         else:
             self.dod = None
             self.date_of_death = None
@@ -193,6 +198,26 @@ class Person:
     def died(self):
         return ' in '.join(filter(None,
                                   (self.date_of_death, self.place_of_death)))
+
+    @cached_property
+    def age(self):
+        if (not self.dob) or self.dod_unknown:
+            return None
+        start = self.dob
+        start_prec = self.dob_prec
+        if self.dod:
+            end = self.dod
+            end_prec = self.dod_prec
+        else:
+            end = date.today()
+            end_prec = 3
+        age = end.year - start.year
+        if min(start_prec, end_prec) < 3:
+            return f'approx. {age}'
+        if ((start.month > end.month) or
+                (start.month == end.month) and (start.day > end.day)):
+            return str(age - 1)
+        return str(age)
 
     @cached_property
     def father(self):

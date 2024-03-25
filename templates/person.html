@@ -22,7 +22,15 @@
             {%- if person.died %}
             <tr>
                 <td>Died</td>
-                <td>{{ person.died }}</td>
+                <td>{{ person.died }}
+                {%- if person.age %} (aged {{ person.age }})
+                {%- endif -%}
+                </td>
+            </tr>
+            {%- elif person.age %}
+            <tr>
+                <td>Age</td>
+                <td>{{ person.age }}</td>
             </tr>
             {%- endif -%}
             {%- if person.occupation %}
