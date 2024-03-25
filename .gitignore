@@ -1,5 +1,5 @@
 .venv
 *.pyc
 *.ini
-famil_tree.json
+family_tree.json
 static/images
