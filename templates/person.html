@@ -31,13 +31,13 @@
             {%- if person.father %}
             <tr>
                 <td>Father</td>
-                <td>{{ person_link(person.father) }}</td>
+                <td>{{ person_link(person.father, True) }}</td>
             </tr>
             {%- endif -%}
             {%- if person.mother %}
             <tr>
                 <td>Mother</td>
-                <td>{{ person_link(person.mother) }}</td>
+                <td>{{ person_link(person.mother, True) }}</td>
             </tr>
             {%- endif -%}
             {%- if person.children %}
@@ -46,7 +46,7 @@
                 <td>
                     <ul>
                         {%- for child in person.children %}
-                        <li>{{ person_link(child) }}</li>
+                        <li>{{ person_link(child, True) }}</li>
                         {%- endfor %}
                     </ul>
                 </td>
