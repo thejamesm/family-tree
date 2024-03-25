@@ -8,12 +8,8 @@
         <title>{{ title() }}</title>
     </head>
     <body>
+        {% include 'search_box.html' %}
         <h1>{{ title() }}</h1>
-        <form>
-            <label for="query">Search:</label>
-            <input type="text" name="query" id="query">
-            <input type="submit">
-        </form>
         <ul>
         {%- for result in results %}
             <li>{{ person_link(result) }}</li>

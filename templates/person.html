@@ -5,6 +5,7 @@
         <title>{{ person.name }}</title>
     </head>
     <body>
+        {% include 'search_box.html' %}
         {% if img_filename -%}
         <img src="{{ url_for('static', filename=img_filename) }}" style="float: right">
         {% endif -%}
