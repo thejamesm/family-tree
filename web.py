@@ -1,11 +1,15 @@
 import os.path
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for
 from markupsafe import escape
 
 from family_tree import Family, Person
 
 app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return redirect(url_for('person_page', id=1))
 
 @app.route('/search/')
 def search():
