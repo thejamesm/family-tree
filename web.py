@@ -11,11 +11,6 @@ app = Flask(__name__)
 def home():
     return redirect(url_for('person_page', id=1))
 
-@app.route('/search/')
-def search():
-    query = escape(request.args.get('query'))
-    return render_template('search.html', results=Person.search(query))
-
 @app.route('/<int:id>')
 def person_page(id):
     family = Family()
@@ -37,3 +32,8 @@ def relatives(id_a, id_b):
     return render_template('relatives.html',
                            person_a=person_a, person_b=person_b,
                            kinship=kinship)
+
+@app.route('/search/')
+def search():
+    query = escape(request.args.get('query'))
+    return render_template('search.html', results=Person.search(query))

@@ -451,6 +451,33 @@ class Person:
             term = f'{term} {removal} removed'
         return term
 
+class PersonEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Person):
+            person = {
+                    'id': obj.id,
+                    'name': obj.name,
+                    'gender': obj.gender,
+                    'date_of_birth': obj.date_of_birth,
+                    'place_of_birth': obj.place_of_birth,
+                    'date_of_death': obj.date_of_death,
+                    'place_of_death': obj.place_of_death,
+                    'father_id': None,
+                    'father': None,
+                    'mother_id': None,
+                    'mother': None,
+                    'children': [{'child_id': child.id, 'child': str(child)}
+                                 for child in obj.children]
+                }
+            if obj.father:
+                person['father_id'] = obj.father.id
+                person['father'] = str(obj.father)
+            if obj.mother:
+                person['mother_id'] = obj.mother.id
+                person['mother'] = str(obj.mother)
+            return person
+        return super().default(obj)
+
 class Database:
     def __init__(self):
         self.config = load_config('postgresql')
@@ -649,33 +676,6 @@ class Database:
         if person['mother_id']:
             line.extend(self.get_ancestors_flat(person['mother_id']))
         return line
-
-class PersonEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, Person):
-            person = {
-                    'id': obj.id,
-                    'name': obj.name,
-                    'gender': obj.gender,
-                    'date_of_birth': obj.date_of_birth,
-                    'place_of_birth': obj.place_of_birth,
-                    'date_of_death': obj.date_of_death,
-                    'place_of_death': obj.place_of_death,
-                    'father_id': None,
-                    'father': None,
-                    'mother_id': None,
-                    'mother': None,
-                    'children': [{'child_id': child.id, 'child': str(child)}
-                                 for child in obj.children]
-                }
-            if obj.father:
-                person['father_id'] = obj.father.id
-                person['father'] = str(obj.father)
-            if obj.mother:
-                person['mother_id'] = obj.mother.id
-                person['mother'] = str(obj.mother)
-            return person
-        return super().default(obj)
 
 if __name__ == '__main__':
     family = Family()
