@@ -1,20 +1,11 @@
-{% from 'macros.html' import person_link -%}
-{% macro title() -%}
-    Search {%- if results %} Results {%- endif %}
-{%- endmacro -%}
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>{{ title() }}</title>
-        {% include 'style.html' %}
-    </head>
-    <body>
-        {% include 'search_box.html' %}
+{% extends 'base.html' %}
+{% macro title() %}Search {%- if results %} Results{%- endif %}{% endmacro %}
+{% block title %}{{ title() }}{% endblock %}
+{% block content %}
         <h1>{{ title() }}</h1>
         <ul>
         {%- for result in results %}
             <li>{{ person_link(result) }}</li>
         {%- endfor %}
         </ul>
-    </body>
-</html>
+{%- endblock %}

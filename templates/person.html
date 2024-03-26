@@ -1,12 +1,6 @@
-{% from 'macros.html' import person_link -%}
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>{{ person.name }}</title>
-        {% include 'style.html' %}
-    </head>
-    <body>
-        {% include 'search_box.html' %}
+{% extends 'base.html' %}
+{% block title %}{{ person.name }}{% endblock %}
+{% block content %}
         <div class="person">
             <div class="info">
                 <h1>{{ person.name }}</h1>
@@ -76,7 +70,6 @@
             <div class="portrait">
                 <img src="{{ url_for('static', filename=img_filename) }}">
             </div>
-            {% endif -%}
+            {%- endif %}
         </div>
-    </body>
-</html>
+{%- endblock %}
