@@ -1,11 +1,23 @@
 body {
     overflow-x: hidden;
     font-size: max(2vmin, 12px);
-    font-family: "EB Garamond", serif;
+    font-family: "Vollkorn", serif;
     font-optical-sizing: auto;
     font-weight: 400;
     font-style: normal;
     background-color: #ffe;
+}
+
+h1 {
+    font-family: "Cinzel Decorative", serif;
+    font-weight: 700;
+    font-style: normal;
+}
+
+h2 {
+    font-family: "Marcellus", serif;
+    font-weight: 400;
+    font-style: normal;
 }
 
 .right {
@@ -43,7 +55,7 @@ body {
 }
 
 .person td:nth-child(1) {
-    padding-right: 0.3em;
+    padding-right: 0.5em;
 }
 
 .person td:nth-child(1):after {
@@ -51,7 +63,7 @@ body {
 }
 
 .person ul {
-    margin: 0.1em 0;
+    margin: 0.2em 0;
     padding-left: 1em;
     list-style-type: circle;
 }
