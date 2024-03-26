@@ -144,7 +144,7 @@ class Person:
         elif self.dod_unknown:
             self.dod = None
             self.date_of_death = 'unknown'
-            self.year_of_death = None
+            self.year_of_death = '?'
         else:
             self.dod = None
             self.date_of_death = None
