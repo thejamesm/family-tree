@@ -7,72 +7,76 @@
     </head>
     <body>
         {% include 'search_box.html' %}
-        {% if img_filename -%}
-        <div class="float-right">
-            <img class="portrait" src="{{ url_for('static', filename=img_filename) }}">
+        <div class="person">
+            <div class="info">
+                <h1>{{ person.name }}</h1>
+                {% if person.dates -%}
+                <h2>{{ person.dates }}</h2>
+                {% endif -%}
+                <table>
+                    {%- if person.born %}
+                    <tr>
+                        <td>Born</td>
+                        <td>{{ person.born }}</td>
+                    </tr>
+                    {%- endif -%}
+                    {%- if person.died %}
+                    <tr>
+                        <td>Died</td>
+                        <td>{{ person.died }}
+                        {%- if person.age %} (aged {{ person.age }})
+                        {%- endif -%}
+                        </td>
+                    </tr>
+                    {%- elif person.age %}
+                    <tr>
+                        <td>Age</td>
+                        <td>{{ person.age }}</td>
+                    </tr>
+                    {%- endif -%}
+                    {%- if person.occupation %}
+                    <tr>
+                        <td>Occupation</td>
+                        <td>{{ person.occupation }}</td>
+                    </tr>
+                    {%- endif -%}
+                    {%- if person.father %}
+                    <tr>
+                        <td>Father</td>
+                        <td>{{ person_link(person.father, True) }}</td>
+                    </tr>
+                    {%- endif -%}
+                    {%- if person.mother %}
+                    <tr>
+                        <td>Mother</td>
+                        <td>{{ person_link(person.mother, True) }}</td>
+                    </tr>
+                    {%- endif -%}
+                    {%- if person.children %}
+                    <tr>
+                        <td>Children</td>
+                        <td>
+                            <ul>
+                                {%- for child in person.children %}
+                                <li>{{ person_link(child, True) }}</li>
+                                {%- endfor %}
+                            </ul>
+                        </td>
+                    </tr>
+                    {%- endif -%}
+                    {%- if person.notes %}
+                    <tr>
+                        <td>Notes</td>
+                        <td>{{ person.notes }}</td>
+                    </tr>
+                    {%- endif %}
+                </table>
+            </div>
+            {% if img_filename -%}
+            <div class="portrait">
+                <img src="{{ url_for('static', filename=img_filename) }}">
+            </div>
+            {% endif -%}
         </div>
-        {% endif -%}
-        <h1>{{ person.name }}</h1>
-        {% if person.dates -%}
-        <h2>{{ person.dates }}</h2>
-        {% endif -%}
-        <table>
-            {%- if person.born %}
-            <tr>
-                <td>Born</td>
-                <td>{{ person.born }}</td>
-            </tr>
-            {%- endif -%}
-            {%- if person.died %}
-            <tr>
-                <td>Died</td>
-                <td>{{ person.died }}
-                {%- if person.age %} (aged {{ person.age }})
-                {%- endif -%}
-                </td>
-            </tr>
-            {%- elif person.age %}
-            <tr>
-                <td>Age</td>
-                <td>{{ person.age }}</td>
-            </tr>
-            {%- endif -%}
-            {%- if person.occupation %}
-            <tr>
-                <td>Occupation</td>
-                <td>{{ person.occupation }}</td>
-            </tr>
-            {%- endif -%}
-            {%- if person.father %}
-            <tr>
-                <td>Father</td>
-                <td>{{ person_link(person.father, True) }}</td>
-            </tr>
-            {%- endif -%}
-            {%- if person.mother %}
-            <tr>
-                <td>Mother</td>
-                <td>{{ person_link(person.mother, True) }}</td>
-            </tr>
-            {%- endif -%}
-            {%- if person.children %}
-            <tr>
-                <td>Children</td>
-                <td>
-                    <ul>
-                        {%- for child in person.children %}
-                        <li>{{ person_link(child, True) }}</li>
-                        {%- endfor %}
-                    </ul>
-                </td>
-            </tr>
-            {%- endif -%}
-            {%- if person.notes %}
-            <tr>
-                <td>Notes</td>
-                <td>{{ person.notes }}</td>
-            </tr>
-            {%- endif %}
-        </table>
     </body>
 </html>

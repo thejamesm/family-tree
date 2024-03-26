@@ -1,3 +1,8 @@
+body {
+    overflow-x: hidden;
+    font-size: 2vmin;
+}
+
 .right {
     text-align: right;
 }
@@ -6,10 +11,24 @@
     width: 100%;
 }
 
-.float-right {
-    float: right
+.person {
+    display: flex;
+    flex-wrap: wrap-reverse;
+    width: 100%;
 }
 
-img.portrait {
+.person > .info {
+    flex: 1 1 400px;
+}
+
+.person > .portrait {
+    flex: 0 1 auto;
+    max-width: 40vw;
+    min-width: 250px;
+    margin: 10px;
+}
+
+.person > .portrait > img {
+    max-width: 100%;
     border: 1px solid #333;
 }
