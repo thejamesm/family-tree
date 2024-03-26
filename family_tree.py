@@ -453,7 +453,7 @@ class Person:
 
 class Database:
     def __init__(self):
-        self.config = load_config()
+        self.config = load_config('postgresql')
 
     @staticmethod
     def sanitize_field(value):
