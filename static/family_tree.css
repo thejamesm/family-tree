@@ -1,6 +1,6 @@
 body {
     overflow-x: hidden;
-    font-size: 2vmin;
+    font-size: max(2vmin, 12px);
     font-family: "EB Garamond", serif;
     font-optical-sizing: auto;
     font-weight: 400;
@@ -36,4 +36,22 @@ body {
 .person > .portrait > img {
     max-width: 100%;
     border: 1px solid #333;
+}
+
+.person td {
+    vertical-align: top;
+}
+
+.person td:nth-child(1) {
+    padding-right: 0.3em;
+}
+
+.person td:nth-child(1):after {
+    content: ":"
+}
+
+.person ul {
+    margin: 0.1em 0;
+    padding-left: 1em;
+    list-style-type: circle;
 }
