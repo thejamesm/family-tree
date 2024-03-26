@@ -33,7 +33,7 @@ class Family:
 
     def search(self, search_string):
         return {p[0]: p[1] for p in self.people.items()
-                if search_string in p[1].name}
+                if search_string.lower() in p[1].name.lower()}
 
     def save(self):
         with open(r'family_tree.json', mode='w', encoding='utf-8') as f:
@@ -404,7 +404,7 @@ class Person:
         if not kinship:
             return 'no blood relation'
         _, short, diff = kinship
-        
+
         if term := calc_term(short, diff, person.gender):
             return term
 
@@ -488,7 +488,7 @@ class Database:
             match = f'%{match}%'
             sql = """SELECT *
                     FROM people
-                    WHERE person_name LIKE %s
+                    WHERE person_name ILIKE %s
                     ORDER BY person_id;"""
         else:
             sql = """SELECT *
