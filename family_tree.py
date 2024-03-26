@@ -260,6 +260,27 @@ class Person:
             children = [Person(child_id) for child_id in child_ids]
         return children
 
+    @cached_property
+    def siblings(self):
+        if not (family := self.family):
+            family = Family()
+        records = family.db.get_siblings(self.id)
+        return [Person(record=record, family=family) for record in records]
+
+    @cached_property
+    def full_siblings(self):
+        if not (family := self.family):
+            family = Family()
+        records = family.db.get_full_siblings(self.id)
+        return [Person(record=record, family=family) for record in records]
+
+    @cached_property
+    def half_siblings(self):
+        if not (family := self.family):
+            family = Family()
+        records = family.db.get_half_siblings(self.id)
+        return [Person(record=record, family=family) for record in records]
+
     def json(self):
         tree = {
                 'id': self.id,
@@ -519,7 +540,7 @@ class Database:
                 FROM people
                 WHERE father_id = %s
                     OR mother_id = %s
-                ORDER BY date_of_birth;"""
+                ORDER BY date_of_birth ASC;"""
         return self.get_all_records(sql, (id, id))
 
     def get_child_ids(self, id):
@@ -528,10 +549,55 @@ class Database:
                    FROM people
                   WHERE %s IN (father_id, mother_id)
                   ORDER BY person_id;"""
-        records = self.get_all_records(sql, id)
-        if not records:
+        if not (records := self.get_all_records(sql, id)):
             return tuple()
         return tuple(x['person_id'] for x in records)
+
+    def get_siblings(self, id):
+        """Return a list of people who share one or both of the given
+           person's parents."""
+        sql = """SELECT people.*
+                   FROM people
+                  CROSS JOIN (SELECT person_id, father_id, mother_id
+                                FROM people
+                               WHERE person_id = %s) AS person
+                  WHERE (people.father_id = person.father_id
+                         OR people.mother_id = person.mother_id)
+                    AND people.person_id <> person.person_id
+                  ORDER BY date_of_birth ASC;"""
+        return self.get_all_records(sql, id)
+
+    def get_full_siblings(self, id):
+        """Returns a list of people who share both the given person's
+           parents."""
+        sql = """SELECT people.*
+                   FROM people
+                  CROSS JOIN (SELECT person_id, father_id, mother_id
+                                FROM people
+                               WHERE person_id = %s) AS person
+                  WHERE COALESCE(people.father_id, -1) = COALESCE(person.father_id, -1)
+                    AND COALESCE(people.mother_id, -1) = COALESCE(person.mother_id, -1)
+                    AND people.person_id <> person.person_id
+                    AND (person.father_id IS NOT NULL
+                         OR person.mother_id IS NOT NULL)
+                  ORDER BY date_of_birth ASC;"""
+        return self.get_all_records(sql, id)
+
+    def get_half_siblings(self, id):
+        """Return a list of people who share exactly one of the given
+           person's parents."""
+        sql = """SELECT people.*
+                   FROM people
+                  CROSS JOIN (SELECT person_id, father_id, mother_id
+                                FROM people
+                               WHERE person_id = %s) AS person
+                  WHERE (people.father_id = person.father_id
+                         AND COALESCE(people.mother_id, -1) <> COALESCE(person.mother_id, -1))
+                     OR (people.mother_id = person.mother_id
+                         AND COALESCE(people.father_id, -1) <> COALESCE(person.father_id, -1))
+                    AND people.person_id <> person.person_id
+                  ORDER BY date_of_birth ASC;"""
+        return self.get_all_records(sql, id)
 
     def get_line(self, id):
         """Return all ancestors and descendants of a given person."""

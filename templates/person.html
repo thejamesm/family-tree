@@ -58,6 +58,30 @@
                         </td>
                     </tr>
                     {%- endif -%}
+                    {%- if person.full_siblings %}
+                    <tr>
+                        <td>Siblings</td>
+                        <td>
+                            <ul>
+                                {%- for sibling in person.full_siblings %}
+                                <li>{{ person_link(sibling, True) }}</li>
+                                {%- endfor %}
+                            </ul>
+                        </td>
+                    </tr>
+                    {%- endif -%}
+                    {%- if person.half_siblings %}
+                    <tr>
+                        <td>Half-siblings</td>
+                        <td>
+                            <ul>
+                                {%- for sibling in person.half_siblings %}
+                                <li>{{ person_link(sibling, True) }}</li>
+                                {%- endfor %}
+                            </ul>
+                        </td>
+                    </tr>
+                    {%- endif -%}
                     {%- if person.notes %}
                     <tr>
                         <td>Notes</td>
@@ -66,7 +90,7 @@
                     {%- endif %}
                 </table>
             </div>
-            {% if img_filename -%}
+            {%- if img_filename %}
             <div class="portrait">
                 <img src="{{ url_for('static', filename=img_filename) }}">
             </div>
