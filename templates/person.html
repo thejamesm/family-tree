@@ -3,11 +3,14 @@
 <html>
     <head>
         <title>{{ person.name }}</title>
+        {% include 'style.html' %}
     </head>
     <body>
         {% include 'search_box.html' %}
         {% if img_filename -%}
-        <img src="{{ url_for('static', filename=img_filename) }}" style="float: right">
+        <div class="float-right">
+            <img class="portrait" src="{{ url_for('static', filename=img_filename) }}">
+        </div>
         {% endif -%}
         <h1>{{ person.name }}</h1>
         {% if person.dates -%}

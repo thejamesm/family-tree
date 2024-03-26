@@ -1,0 +1,15 @@
+.right {
+    text-align: right;
+}
+
+.fullwidth {
+    width: 100%;
+}
+
+.float-right {
+    float: right
+}
+
+img.portrait {
+    border: 1px solid #333;
+}
