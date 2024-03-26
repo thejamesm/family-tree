@@ -1,17 +1,39 @@
 import os.path
 
-from flask import Flask, render_template, request, redirect, url_for
+from flask import (Flask, render_template, request, redirect, url_for, flash,
+                   session)
 from markupsafe import escape
+from flask_login import (LoginManager, UserMixin, login_required, login_user,
+                         logout_user)
 
 from family_tree import Family, Person
+from config import load_config
+
+config = load_config('authentication')
 
 app = Flask(__name__)
 
+app.secret_key = config['secret_key']
+app.config['USE_SESSION_FOR_NEXT'] = True
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'password_page'
+
+class User(UserMixin):
+    def __init__(self):
+        self.id = 0
+
+@login_manager.user_loader
+def user_loader(_):
+    return User()
+
 @app.route('/')
+@login_required
 def home():
     return redirect(url_for('person_page', id=1))
 
 @app.route('/<int:id>')
+@login_required
 def person_page(id):
     family = Family()
     person = family.person(id)
@@ -23,6 +45,7 @@ def person_page(id):
                            img_filename=img_filename)
 
 @app.route('/<int:id_a>/<int:id_b>')
+@login_required
 def relatives(id_a, id_b):
     family = Family()
     family.add_all()
@@ -34,6 +57,28 @@ def relatives(id_a, id_b):
                            kinship=kinship)
 
 @app.route('/search/')
+@login_required
 def search():
     query = escape(request.args.get('query'))
     return render_template('search.html', results=Person.search(query))
+
+@app.route('/password')
+def password_page():
+    return render_template('password.html')
+
+@app.route('/password', methods=['POST'])
+def check_password():
+    password = request.form.get('password')
+    if password == config['password']:
+        user = User()
+        login_user(user)
+        if 'next' in session:
+            return redirect(session.pop('next'))
+        return redirect(url_for('home'))
+    flash('Incorrect password')
+    return redirect(url_for('password_page'))
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('password_page'))

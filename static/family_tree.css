@@ -35,16 +35,38 @@ input {
     font-style: normal;
 }
 
+body:has(.center) {
+    margin: 0;
+    height: 100vh;
+    display: grid;
+    place-items: center;
+}
+
 .right {
     text-align: right;
 }
 
-#query {
-    width: 12em;
-}
-
 .fullwidth {
     width: 100%;
+}
+
+.notification {
+    background-color: #d33;
+    color: #400;
+    border: 0.1em solid #800;
+    border-radius: 0.3em;
+    margin-bottom: 0.5em;
+    padding: 0.05em 0.25em;
+    opacity: 95%;
+    cursor: default;
+}
+
+.notification:hover {
+    opacity: 100%;
+}
+
+#query {
+    width: 12em;
 }
 
 .person {
