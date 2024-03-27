@@ -136,6 +136,7 @@ class Person:
         _dod = record['date_of_death']
         self.dod_prec = record['date_of_death_precision']
         self.dod_unknown = record['date_of_death_unknown']
+        self.dead = _dod or self.dod_unknown
         if _dod:
             self.dod = date.fromisoformat(_dod)
             dod_pattern = ' '.join(Person._pattern_parts[3 - self.dod_prec:])
