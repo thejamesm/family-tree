@@ -1,4 +1,5 @@
 {% macro person_link(person, dates=False) -%}
     <a href="{{ url_for('person_page', id=person.id) }}">{{ person.name }}</a>
-    {%- if dates and person.dates %} ({{ person.years }}){% endif -%}
+    {%- if dates and person.dates %} <span class="nowrap">({{ person.years -}}
+    )</span>{% endif -%}
 {%- endmacro -%}

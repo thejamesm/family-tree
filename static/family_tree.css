@@ -65,6 +65,10 @@ body:has(.center) {
     opacity: 100%;
 }
 
+.nowrap {
+    white-space: nowrap;
+}
+
 #query {
     width: 12em;
 }
