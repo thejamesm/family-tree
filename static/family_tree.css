@@ -92,7 +92,7 @@ body:has(.center) {
 
 .person > .portrait > img {
     max-width: 100%;
-    border: 1px solid #333;
+    border: 0.1em solid #333;
 }
 
 .person td {
@@ -103,12 +103,16 @@ body:has(.center) {
     padding-right: 0.5em;
 }
 
+.person td:nth-child(2) {
+    max-width: 40em;
+}
+
 .person td:nth-child(1):after {
     content: ":"
 }
 
 .person ul {
-    margin: 0.1em 0;
+    margin: 0 0 0.2em;
     padding-left: 1em;
     list-style-type: circle;
 }
