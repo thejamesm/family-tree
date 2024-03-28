@@ -282,6 +282,17 @@ class Person:
         records = family.db.get_half_siblings(self.id)
         return [Person(record=record, family=family) for record in records]
 
+    @cached_property
+    def relationships(self):
+        if not (family := self.family):
+            family = Family()
+        records = family.db.get_partners(self.id)
+        output = []
+        for record in records:
+            partner = family.person(record['person_id'])
+            output.append(Relationship(self, partner, record))
+        return output
+
     def json(self):
         tree = {
                 'id': self.id,
@@ -478,6 +489,140 @@ class PersonEncoder(json.JSONEncoder):
                 person['mother'] = str(obj.mother)
             return person
         return super().default(obj)
+
+class Relationship:
+    def __init__(self, person_a, person_b, record):
+        self.id = record['relationship_id']
+        self.type = record['relationship_type']
+        self.people = (person_a, person_b)
+        self.partner = person_b
+
+        start_date = record['start_date']
+        start_prec = record['start_date_precision']
+        if start_date:
+            self._start_date = date.fromisoformat(start_date)
+            start_pattern = ' '.join(Person._pattern_parts[3 - start_prec:])
+            self.start_date = date.strftime(self._start_date, start_pattern)
+            self.start_year = self._start_date.year
+        else:
+            self._start_date = None
+            self.start_date = None
+            self.start_year = None
+        self.start_place = record['place']
+
+        end_date = record['end_date']
+        end_prec = record['end_date_precision']
+        if end_date:
+            self._end_date = date.fromisoformat(end_date)
+            end_pattern = ' '.join(Person._pattern_parts[3 - end_prec:])
+            self.end_date = date.strftime(self._end_date, end_pattern)
+            self.end_year = self._end_date.year
+        else:
+            self._end_date = None
+            self.end_date = None
+            self.end_year = None
+        self.end_type = record['end_type']
+
+    @cached_property
+    def partner_description(self):
+        match self.type, self.partner.gender:
+            case 'marriage', 'male':
+                return 'husband'
+            case 'marriage', 'female':
+                return 'wife'
+            case 'marriage', _:
+                return 'spouse'
+            case 'couple', _:
+                return 'partner'
+
+    @cached_property
+    def dates(self):
+        someone_dead = any([person.dead for person in self.people])
+        match self.start_date, self.end_date, someone_dead:
+            case None, None, _:
+                return None
+            case _, None, False:
+                return f'{self.start_date} –'
+            case _, None, True:
+                return f'{self.start_date} – ?'
+            case None, _, _:
+                return f'? – {self.end_date}'
+            case _:
+                return f'{self.start_date} – {self.end_date}'
+
+    @cached_property
+    def years(self):
+        someone_dead = any([person.dead for person in self.people])
+        match self.start_year, self.end_year, someone_dead:
+            case None, None, _:
+                return None
+            case _, None, False:
+                return f'{self.start_year} –'
+            case _, None, True:
+                return f'{self.start_year} – ?'
+            case None, _, _:
+                return f'? – {self.end_year}'
+            case _:
+                return f'{self.start_year} – {self.end_year}'
+
+    @cached_property
+    def started(self):
+        if place := self.start_place:
+            place = ' in ' + place
+        return ((self.start_date or '') + (place or '')).strip() or None
+
+    @cached_property
+    def ended(self):
+        return ', '.join(filter(None, (self.end_date, self.end_type))) or None
+
+    @cached_property
+    def description(self):
+        return ', '.join(filter(None, (self.started, self.ended))) or None
+
+    def end_type_description(self, noun=True, until=False):
+        def death_description():
+            per_a, per_b = self.people
+            if per_a.dod and per_b.dod:
+                per_a_died_first = per_a.dod < per_b.dod
+            elif per_a.dod and self._end_date:
+                per_a_died_first = per_a.dod <= self._end_date
+            elif per_b.dod and self._end_date:
+                per_a_died_first = per_b.dod > self._end_date
+            else:
+                return 'death'
+
+            match per_a_died_first, per_a.gender, per_b.gender:
+                case True, 'male', 'female':
+                    return 'his death'
+                case True, 'female', 'male':
+                    return 'her death'
+                case False, 'male', 'female':
+                    return 'her death'
+                case False, 'female', 'male':
+                    return 'his death'
+                case True, _, _:
+                    return f'the death of {per_a.name}'
+                case False, _, _:
+                    return f'the death of {per_b.name}'
+
+        if self.end_type == 'death':
+            description = death_description()
+            if until:
+                return 'until ' + description
+            return description
+
+        if noun:
+            return self.end_type
+        
+        match self.end_type:
+            case 'marriage':
+                return 'married'
+            case 'divorce':
+                return 'divorced'
+            case 'separation':
+                return 'separated'
+
+        return None
 
 class Database:
     def __init__(self):
@@ -677,6 +822,18 @@ class Database:
         if person['mother_id']:
             line.extend(self.get_ancestors_flat(person['mother_id']))
         return line
+
+    def get_partners(self, id):
+        """Get partners of any type for the given person."""
+        sql = """SELECT *
+                   FROM people AS o
+                  INNER JOIN relationships AS r
+                     ON o.person_id IN (r.person_a_id, r.person_b_id)
+                  WHERE %s IN (r.person_a_id, r.person_b_id)
+                    AND o.person_id <> %s
+                  ORDER BY r.start_date ASC,
+                        r.relationship_id ASC;"""
+        return self.get_all_records(sql, (id, id))
 
 if __name__ == '__main__':
     family = Family()
