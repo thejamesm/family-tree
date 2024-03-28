@@ -60,7 +60,8 @@ def relatives(id_a, id_b):
 @login_required
 def search():
     query = escape(request.args.get('query'))
-    return render_template('search.html', results=Person.search(query))
+    return render_template('search.html',
+                           query=query, results=Person.search(query))
 
 @app.route('/password')
 def password_page():

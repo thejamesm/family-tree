@@ -1,4 +1,4 @@
-{% from 'macros.html' import person_link -%}
+{% from 'macros.html' import search_box, person_link -%}
 <!DOCTYPE html>
 <html>
     <head>
@@ -12,12 +12,9 @@
         {%- endblock %}
     </head>
     <body>
-        {% block search_box -%}
+        {% block search_bar -%}
         <div class="fullwidth right">
-            <form action="{{ url_for('search') }}">
-                <input type="text" name="query" id="query">
-                <input type="submit" value="Search">
-            </form>
+            {{ search_box() }}
         </div>
         {%- endblock %}
         {%- block content %}{% endblock %}
