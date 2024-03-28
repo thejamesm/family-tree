@@ -144,7 +144,7 @@ class Person:
             self.year_of_death = self.dod.year
         elif self.dod_unknown:
             self.dod = None
-            self.date_of_death = 'unknown'
+            self.date_of_death = None
             self.year_of_death = '?'
         else:
             self.dod = None
@@ -185,6 +185,8 @@ class Person:
             return f'{self.year_of_birth} – {self.year_of_death}'
         elif self.year_of_birth:
             return f'b. {self.year_of_birth}'
+        elif self.dod_unknown:
+            return f'†'
         elif self.year_of_death:
             return f'd. {self.year_of_death}'
         else:
