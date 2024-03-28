@@ -1,8 +1,13 @@
 {% extends 'base.html' %}
+{% if person_a.name[-1] == 's' -%}
+    {% set suffix = '’' -%}
+{% else -%}
+    {% set suffix = '’s' -%}
+{% endif -%}
 {% block title %}{{ person_a.name }}—{{ person_b.name }}{% endblock %}
 {% block content %}
         <p>
-            {{ person_link(person_b) }} is {{ person_link(person_a) }}’s
+            {{ person_link(person_b) }} is {{ person_link(person_a) }}{{ suffix }}
             {{ kinship }}
         </p>
 {% endblock %}
