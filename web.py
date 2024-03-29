@@ -10,9 +10,23 @@ from family_tree import Family, Person
 from config import load_config
 from filters import parse_notes
 
+class User(UserMixin):
+    def __init__(self):
+        self.id = 0
+
+class SecuredImagesFlask(Flask):
+    def send_static_file(self, filename):
+        if filename.startswith('images/'):
+            return self.image_loader(filename)
+        return super().send_static_file(filename)
+
+    @login_required
+    def image_loader(self, filename):
+        return super().send_static_file(filename)
+
 config = load_config('authentication')
 
-app = Flask(__name__)
+app = SecuredImagesFlask(__name__)
 
 app.secret_key = config['secret_key']
 app.config['USE_SESSION_FOR_NEXT'] = True
@@ -21,10 +35,6 @@ app.jinja_env.filters['parse_notes'] = parse_notes
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'password_page'
-
-class User(UserMixin):
-    def __init__(self):
-        self.id = 0
 
 @login_manager.user_loader
 def user_loader(_):
