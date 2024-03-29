@@ -8,6 +8,7 @@ from flask_login import (LoginManager, UserMixin, login_required, login_user,
 
 from family_tree import Family, Person
 from config import load_config
+from filters import parse_notes
 
 config = load_config('authentication')
 
@@ -15,6 +16,8 @@ app = Flask(__name__)
 
 app.secret_key = config['secret_key']
 app.config['USE_SESSION_FOR_NEXT'] = True
+app.jinja_env.filters['parse_notes'] = parse_notes
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'password_page'

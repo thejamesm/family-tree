@@ -98,7 +98,9 @@
                     {%- if person.notes %}
                     <tr>
                         <td>Notes</td>
-                        <td>{{ person.notes }}</td>
+                        <td class="notes">
+{{ person.notes | parse_notes }}
+                        </td>
                     </tr>
                     {%- endif %}
                 </table>

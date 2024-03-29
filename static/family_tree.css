@@ -116,3 +116,7 @@ body:has(.center) {
     padding-left: 1em;
     list-style-type: circle;
 }
+
+.notes {
+    font-size: 0.9em;
+}
