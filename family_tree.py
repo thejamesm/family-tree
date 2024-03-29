@@ -12,6 +12,8 @@ class Family:
     def __init__(self):
         self.people = {}
         self.db = Database()
+        self.config = load_config('family_tree')
+        self.inflect_engine = inflect.engine()
 
     def person(self, person):
         if type(person) is Person:
@@ -443,13 +445,17 @@ class Person:
         if term := calc_term(short, diff, person.gender):
             return term
 
+        p = self.family.inflect_engine
         if short in (0, 1):
             levels = abs(diff) - 2
-            prefix = '-'.join(('great',) * levels) + ' grand'
+            if levels <= int(self.family.config['max_great_levels']):
+                prefix = '-'.join(('great',) * levels) + ' grand'
+            else:
+                prefix = (p.number_to_words(p.ordinal(levels)) +
+                          '-great grand')
             sign = 1 if diff > 0 else -1
             return prefix + calc_term(short, sign, person.gender)
 
-        p = inflect.engine()
         term = p.number_to_words(p.ordinal(short-1)) + ' cousin'
         if diff:
             diff = abs(diff)
