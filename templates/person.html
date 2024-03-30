@@ -1,10 +1,11 @@
 {% from 'macros.html' import relationship_description -%}
 {% extends 'base.html' %}
+{% if person.spurious %}{% set spurious_class = ' class="spurious"' | safe %}{% endif %}
 {% block title %}{{ person.name }}{% endblock %}
 {% block content %}
         <div class="person">
             <div class="info">
-                <h1>{{ person.name }}</h1>
+                <h1{{ spurious_class }}>{{ person.name }}</h1>
                 {% if person.dates -%}
                 <h2>{{ person.dates }}</h2>
                 {% endif -%}

@@ -120,3 +120,7 @@ body:has(.center) {
 .notes {
     font-size: 0.9em;
 }
+
+.spurious, .spurious * {
+    font-style: italic;
+}

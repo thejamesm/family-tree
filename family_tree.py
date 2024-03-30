@@ -8,11 +8,12 @@ import inflect
 
 from config import load_config
 
+app_config = load_config('family_tree')
+
 class Family:
     def __init__(self):
         self.people = {}
         self.db = Database()
-        self.config = load_config('family_tree')
         self.inflect_engine = inflect.engine()
 
     def person(self, person):
@@ -159,6 +160,8 @@ class Person:
         self._father_id = record['father_id']
         self._mother_id = record['mother_id']
 
+        self.spurious = record['spurious']
+
         if family:
             family.people[self.id] = self
 
@@ -233,6 +236,9 @@ class Person:
             father = self.family.person(self._father_id)
         else:
             father = Person(father_id)
+        if (app_config['exclude_distant_history'].lower() == 'true'
+            and father.spurious):
+            return None
         return father
 
     @cached_property
@@ -244,6 +250,9 @@ class Person:
             mother = self.family.person(self._mother_id)
         else:
             mother = Person(mother_id)
+        if (app_config['exclude_distant_history'].lower() == 'true'
+            and mother.spurious):
+            return None
         return mother
 
     @cached_property
@@ -448,7 +457,7 @@ class Person:
         p = self.family.inflect_engine
         if short in (0, 1):
             levels = abs(diff) - 2
-            if levels <= int(self.family.config['max_great_levels']):
+            if levels <= int(app_config['max_great_levels']):
                 prefix = '-'.join(('great',) * levels) + ' grand'
             else:
                 prefix = (p.number_to_words(p.ordinal(levels)) +
@@ -634,7 +643,7 @@ class Relationship:
 
 class Database:
     def __init__(self):
-        self.config = load_config('postgresql')
+        self.db_config = load_config('postgresql')
 
     @staticmethod
     def sanitize_field(value):
@@ -648,7 +657,7 @@ class Database:
         if type(params) is not tuple:
             params = (params,)
         try:
-            with psycopg2.connect(**self.config) as conn:
+            with psycopg2.connect(**self.db_config) as conn:
                 with conn.cursor() as cur:
                     cur.execute(sql, params)
                     col_names = [col.name for col in cur.description]
@@ -662,7 +671,7 @@ class Database:
     def record_generator(self, sql, params=(), size=100):
         """Create an optionally batched generator from the supplied SQL."""
         try:
-            with psycopg2.connect(**self.config) as conn:
+            with psycopg2.connect(**self.db_config) as conn:
                 with conn.cursor() as cur:
                     cur.execute(sql, params)
                     col_names = [col.name for col in cur.description]
@@ -688,29 +697,25 @@ class Database:
            Otherwise, return the entire contents of the `people` table."""
         if match:
             match = f'%{match}%'
-            sql = """SELECT *
-                    FROM people
-                    WHERE person_name ILIKE %s
-                    ORDER BY person_id;"""
-        else:
-            sql = """SELECT *
-                    FROM people
-                    ORDER BY person_id;"""
+        sql = """SELECT *
+                 FROM people
+                 WHERE person_name ILIKE %s
+                 ORDER BY person_id;"""
         return self.get_all_records(sql, match)
 
-    def get_person(self, id):
-        """Return a single person's record."""
-        if type(id) is int or (type(id) is str and id.isnumeric()):
+    def get_person(self, match):
+        """For a given ID or name, return a single matching person."""
+        if type(match) is int or (type(match) is str and match.isnumeric()):
             sql = """SELECT *
                     FROM people
                     WHERE person_id = %s;"""
         else:
-            id = f'%{id}%'
+            match = f'%{match}%'
             sql = """SELECT *
                     FROM people
                     WHERE person_name LIKE %s
                     ORDER BY person_id;"""
-        result = self.get_all_records(sql, id)
+        result = self.get_all_records(sql, match)
         if not result:
             raise ValueError('Person not found.')
         return result[0]
