@@ -690,8 +690,8 @@ class Database:
     def get_ids(self):
         """Return a list of all active IDs in the `people` table."""
         sql = """SELECT person_id
-                FROM people
-                ORDER BY person_id;"""
+                   FROM people
+                  ORDER BY person_id;"""
         return tuple(x['person_id'] for x in self.get_all_records(sql))
 
     def get_people(self, match=None):
@@ -701,23 +701,23 @@ class Database:
         if match:
             match = f'%{match}%'
         sql = """SELECT *
-                 FROM people
-                 WHERE person_name ILIKE %s
-                 ORDER BY person_id;"""
+                   FROM people
+                  WHERE person_name ILIKE %s
+                  ORDER BY person_id;"""
         return self.get_all_records(sql, match)
 
     def get_person(self, match):
         """For a given ID or name, return a single matching person."""
         if type(match) is int or (type(match) is str and match.isnumeric()):
             sql = """SELECT *
-                    FROM people
-                    WHERE person_id = %s;"""
+                       FROM people
+                      WHERE person_id = %s;"""
         else:
             match = f'%{match}%'
             sql = """SELECT *
-                    FROM people
-                    WHERE person_name LIKE %s
-                    ORDER BY person_id;"""
+                       FROM people
+                      WHERE person_name LIKE %s
+                      ORDER BY person_id;"""
         result = self.get_all_records(sql, match)
         if not result:
             raise ValueError('Person not found.')
@@ -726,10 +726,10 @@ class Database:
     def get_children(self, id):
         """Return a list of the children of a given person."""
         sql = """SELECT *
-                FROM people
-                WHERE father_id = %s
-                    OR mother_id = %s
-                ORDER BY date_of_birth ASC;"""
+                   FROM people
+                  WHERE father_id = %s
+                     OR mother_id = %s
+                  ORDER BY date_of_birth ASC;"""
         return self.get_all_records(sql, (id, id))
 
     def get_child_ids(self, id):
