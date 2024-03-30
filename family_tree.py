@@ -220,10 +220,13 @@ class Person:
             end = date.today()
             end_prec = 3
         age = end.year - start.year
-        if min(start_prec, end_prec) < 3:
+        if min(start_prec, end_prec) == 1:
             return f'approx. {age}'
-        if ((start.month > end.month) or
-                (start.month == end.month) and (start.day > end.day)):
+        if (start.month > end.month):
+            return str(age - 1)
+        if (start.month == end.month) and (start.day > end.day):
+            if min(start_prec, end_prec) == 2:
+                return f'approx. {age - 1}'
             return str(age - 1)
         return str(age)
 
