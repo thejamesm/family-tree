@@ -720,13 +720,14 @@ class Database:
             sql = """SELECT *
                        FROM people
                       WHERE person_id = %s;"""
+            result = self.get_all_records(sql, match)
         else:
             wildcard_match = f'%{match}%'
             sql = """SELECT *
                        FROM people
                       WHERE person_name ILIKE %s
                       ORDER BY person_id;"""
-        result = self.get_all_records(sql, wildcard_match)
+            result = self.get_all_records(sql, wildcard_match)
         if not result:
             sql = f"""SELECT *
                         FROM people
