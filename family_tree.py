@@ -647,6 +647,7 @@ class Relationship:
 class Database:
     def __init__(self):
         self.db_config = load_config('postgresql')
+        self.MPHONE_LEN = 15
 
     @staticmethod
     def sanitize_field(value):
@@ -698,13 +699,20 @@ class Database:
         """If `match` is supplied, return all people with names
            containing `match`.
            Otherwise, return the entire contents of the `people` table."""
-        if match:
-            match = f'%{match}%'
+        wildcard_match = f'%{match}%'
         sql = """SELECT *
                    FROM people
                   WHERE person_name ILIKE %s
                   ORDER BY person_id;"""
-        return self.get_all_records(sql, match)
+        results = self.get_all_records(sql, wildcard_match)
+        if not results:
+            sql = f"""SELECT *
+                        FROM people
+                       WHERE METAPHONE(person_name, {self.MPHONE_LEN})
+                        LIKE '%%' || METAPHONE(%s, {self.MPHONE_LEN}) || '%%'
+                       ORDER BY SIMILARITY(%s, person_name) DESC;"""
+            results = self.get_all_records(sql, (match, match))
+        return results
 
     def get_person(self, match):
         """For a given ID or name, return a single matching person."""
@@ -713,14 +721,21 @@ class Database:
                        FROM people
                       WHERE person_id = %s;"""
         else:
-            match = f'%{match}%'
+            wildcard_match = f'%{match}%'
             sql = """SELECT *
                        FROM people
-                      WHERE person_name LIKE %s
+                      WHERE person_name ILIKE %s
                       ORDER BY person_id;"""
-        result = self.get_all_records(sql, match)
+        result = self.get_all_records(sql, wildcard_match)
         if not result:
-            raise ValueError('Person not found.')
+            sql = f"""SELECT *
+                        FROM people
+                       WHERE METAPHONE(person_name, {self.MPHONE_LEN})
+                        LIKE '%%' || METAPHONE(%s, {self.MPHONE_LEN}) || '%%'
+                       ORDER BY SIMILARITY(%s, person_name) DESC;"""
+            result = self.get_all_records(sql, (match, match))
+            if not result:
+                raise ValueError('Person not found.')
         return result[0]
 
     def get_children(self, id):
