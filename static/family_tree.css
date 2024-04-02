@@ -10,12 +10,14 @@ body {
 }
 
 h1 {
+    font-size: 2em;
     font-family: "Cinzel Decorative", serif;
     font-weight: 700;
     font-style: normal;
 }
 
 h2 {
+    font-size: 1.5em;
     font-family: "Marcellus", serif;
     font-weight: 400;
     font-style: normal;

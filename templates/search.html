@@ -2,16 +2,18 @@
 {% macro title() %}Search {%- if query != 'None' %} Results{%- endif %}{% endmacro %}
 {% block title %}{{ title() }}{% endblock %}
 {% block content %}
-        <h1>{{ title() }}</h1>
-        {%- if results %}
-        <ul>
-            {%- for result in results %}
-            <li>{{ person_link(result, True) }}</li>
-            {%- endfor %}
-        </ul>
-        {%- elif query != 'None' %}
-        <p>No results matching the query “{{ query }}”</p>
-        {%- else %}
-        {{ search_box(True) }}
-        {%- endif %}
+        <section class="results">
+            <h1>{{ title() }}</h1>
+            {%- if results %}
+            <ul>
+                {%- for result in results %}
+                <li>{{ person_link(result, True) }}</li>
+                {%- endfor %}
+            </ul>
+            {%- elif query != 'None' %}
+            <p>No results matching the query “{{ query }}”</p>
+            {%- else %}
+            {{ search_box(True) }}
+            {%- endif %}
+        </section>
 {%- endblock %}

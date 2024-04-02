@@ -3,7 +3,7 @@
 {% if person.spurious %}{% set spurious_class = ' class="spurious"' | safe %}{% endif %}
 {% block title %}{{ person.name }}{% endblock %}
 {% block content %}
-        <div class="person">
+        <section class="person">
             <div class="info">
                 <h1{{ spurious_class }}>{{ person.name }}</h1>
                 {% if person.dates -%}
@@ -107,9 +107,9 @@
                 </table>
             </div>
             {%- if img_filename %}
-            <div class="portrait">
+            <aside class="portrait">
                 <img src="{{ url_for('static', filename=img_filename) }}">
-            </div>
+            </aside>
             {%- endif %}
-        </div>
+        </section>
 {%- endblock %}
