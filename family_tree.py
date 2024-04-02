@@ -692,7 +692,7 @@ class Database:
         """Return a list of all active IDs in the `people` table."""
         sql = """SELECT person_id
                    FROM people
-                  ORDER BY person_id;"""
+                  ORDER BY person_id ASC;"""
         return tuple(x['person_id'] for x in self.get_all_records(sql))
 
     def get_people(self, match=None):
@@ -703,14 +703,16 @@ class Database:
         sql = """SELECT *
                    FROM people
                   WHERE person_name ILIKE %s
-                  ORDER BY person_id;"""
+                  ORDER BY spurious ASC,
+                           person_id ASC;"""
         results = self.get_all_records(sql, wildcard_match)
         if not results:
             sql = f"""SELECT *
                         FROM people
                        WHERE METAPHONE(person_name, {self.MPHONE_LEN})
                         LIKE '%%' || METAPHONE(%s, {self.MPHONE_LEN}) || '%%'
-                       ORDER BY SIMILARITY(%s, person_name) DESC;"""
+                       ORDER BY spurious ASC,
+                                SIMILARITY(%s, person_name) DESC;"""
             results = self.get_all_records(sql, (match, match))
         return results
 
@@ -726,14 +728,16 @@ class Database:
             sql = """SELECT *
                        FROM people
                       WHERE person_name ILIKE %s
-                      ORDER BY person_id;"""
+                      ORDER BY spurious ASC,
+                               person_id ASC;"""
             result = self.get_all_records(sql, wildcard_match)
         if not result:
             sql = f"""SELECT *
                         FROM people
                        WHERE METAPHONE(person_name, {self.MPHONE_LEN})
                         LIKE '%%' || METAPHONE(%s, {self.MPHONE_LEN}) || '%%'
-                       ORDER BY SIMILARITY(%s, person_name) DESC;"""
+                       ORDER BY spurious ASC,
+                                SIMILARITY(%s, person_name) DESC;"""
             result = self.get_all_records(sql, (match, match))
             if not result:
                 raise ValueError('Person not found.')
@@ -745,7 +749,8 @@ class Database:
                    FROM people
                   WHERE father_id = %s
                      OR mother_id = %s
-                  ORDER BY date_of_birth ASC;"""
+                  ORDER BY spurious ASC,
+                           date_of_birth ASC;"""
         return self.get_all_records(sql, (id, id))
 
     def get_child_ids(self, id):
@@ -753,7 +758,8 @@ class Database:
         sql = """SELECT person_id
                    FROM people
                   WHERE %s IN (father_id, mother_id)
-                  ORDER BY date_of_birth ASC;"""
+                  ORDER BY spurious ASC,
+                           date_of_birth ASC;"""
         if not (records := self.get_all_records(sql, id)):
             return tuple()
         return tuple(x['person_id'] for x in records)
@@ -769,7 +775,8 @@ class Database:
                   WHERE (people.father_id = person.father_id
                          OR people.mother_id = person.mother_id)
                     AND people.person_id <> person.person_id
-                  ORDER BY date_of_birth ASC;"""
+                  ORDER BY spurious ASC,
+                           date_of_birth ASC;"""
         return self.get_all_records(sql, id)
 
     def get_full_siblings(self, id):
@@ -785,7 +792,8 @@ class Database:
                     AND people.person_id <> person.person_id
                     AND (person.father_id IS NOT NULL
                          OR person.mother_id IS NOT NULL)
-                  ORDER BY date_of_birth ASC;"""
+                  ORDER BY spurious ASC,
+                           date_of_birth ASC;"""
         return self.get_all_records(sql, id)
 
     def get_half_siblings(self, id):
@@ -801,7 +809,8 @@ class Database:
                      OR (people.mother_id = person.mother_id
                          AND COALESCE(people.father_id, -1) <> COALESCE(person.father_id, -1))
                     AND people.person_id <> person.person_id
-                  ORDER BY date_of_birth ASC;"""
+                  ORDER BY spurious ASC,
+                           date_of_birth ASC;"""
         return self.get_all_records(sql, id)
 
     def get_line(self, id):
@@ -863,8 +872,9 @@ class Database:
                      ON o.person_id IN (r.person_a_id, r.person_b_id)
                   WHERE %s IN (r.person_a_id, r.person_b_id)
                     AND o.person_id <> %s
-                  ORDER BY r.start_date ASC,
-                        r.relationship_id ASC;"""
+                  ORDER BY spurious ASC,
+                           r.start_date ASC,
+                           r.relationship_id ASC;"""
         return self.get_all_records(sql, (id, id))
 
 if __name__ == '__main__':
