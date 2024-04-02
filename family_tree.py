@@ -103,8 +103,8 @@ class Family:
 
 class Person:
     @classmethod
-    def search(cls, search_string):
-        return [Person(record=record)
+    def search(cls, search_string, family=None):
+        return [Person(record=record, family=family)
                 for record in Database().get_people(search_string)]
 
     _pattern_parts = (('%#d', '%B', '%Y') if os.name == 'nt'
