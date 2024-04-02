@@ -753,7 +753,7 @@ class Database:
         sql = """SELECT person_id
                    FROM people
                   WHERE %s IN (father_id, mother_id)
-                  ORDER BY person_id;"""
+                  ORDER BY date_of_birth ASC;"""
         if not (records := self.get_all_records(sql, id)):
             return tuple()
         return tuple(x['person_id'] for x in records)
