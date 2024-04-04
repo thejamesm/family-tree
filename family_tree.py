@@ -43,8 +43,8 @@ class Family:
             json.dump(list(self.people.values()), f, cls=PersonEncoder,
                       indent=4, ensure_ascii=False)
 
-    def longest_line(self):
-        return max([person.longest_line() for person in self.people.values()],
+    def get_longest_line(self):
+        return max([person.get_longest_line() for person in self.people.values()],
                    key=len)
 
     def kinship(self, person_a, person_b):
@@ -347,42 +347,42 @@ class Person:
             tree['mother_id'] = self.mother.id
         return tree
 
-    def ancestors(self):
+    def get_ancestors(self):
         tree = {'person': self}
         if self.father:
-            tree['father'] = self.father.ancestors()
+            tree['father'] = self.father.get_ancestors()
         if self.mother:
-            tree['mother'] = self.mother.ancestors()
+            tree['mother'] = self.mother.get_ancestors()
         return tree
 
-    def descendants(self):
+    def get_descendants(self):
         tree = {'person': self}
         if self.children:
-            tree['children'] = [child.descendants()
+            tree['children'] = [child.get_descendants()
                                 for child in self.children]
         return tree
 
-    def line(self):
-        tree = self.ancestors()
+    def get_line(self):
+        tree = self.get_ancestors()
         if self.children:
-            tree['children'] = self.descendants()['children']
+            tree['children'] = self.get_descendants()['children']
         return tree
 
-    def longest_ancestor_line(self):
-        father_line = (self.father.longest_ancestor_line() if self.father
-                       else [])
-        mother_line = (self.mother.longest_ancestor_line() if self.mother
-                       else [])
+    def get_longest_ancestor_line(self):
+        father_line = (self.father.get_longest_ancestor_line()
+                       if self.father else [])
+        mother_line = (self.mother.get_longest_ancestor_line()
+                       if self.mother else [])
         return max(father_line, mother_line, key=len) + [self]
 
-    def longest_descendant_line(self):
-        return [self] + max([child.longest_descendant_line()
+    def get_longest_descendant_line(self):
+        return [self] + max([child.get_longest_descendant_line()
                              for child in self.children],
                             default=[], key=len)
 
-    def longest_line(self):
-        return (self.longest_ancestor_line() +
-                self.longest_descendant_line()[1:])
+    def get_longest_line(self):
+        return (self.get_longest_ancestor_line() +
+                self.get_longest_descendant_line()[1:])
 
     def kinship_term(self, person):
         def calc_term(short, diff, gender):
