@@ -699,6 +699,12 @@ class Database:
         """If `match` is supplied, return all people with names
            containing `match`.
            Otherwise, return the entire contents of the `people` table."""
+        if match is None:
+            sql = """SELECT *
+                       FROM people
+                      ORDER BY spurious ASC,
+                               person_id ASC;"""
+            return self.get_all_records(sql)
         wildcard_match = f'%{match}%'
         sql = """SELECT *
                    FROM people
