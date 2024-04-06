@@ -235,28 +235,28 @@ class Person:
         father_id = self._father_id
         if not father_id:
             return None
-        if self.family:
-            father = self.family.person(self._father_id)
-        else:
-            father = Person(father_id)
-        if (app_config['exclude_distant_history'].lower() == 'true'
-            and father.spurious):
+        try:
+            if self.family:
+                father = self.family.person(self._father_id)
+            else:
+                father = Person(father_id)
+            return father
+        except SpuriousConnection:
             return None
-        return father
 
     @cached_property
     def mother(self):
         mother_id = self._mother_id
         if not mother_id:
             return None
-        if self.family:
-            mother = self.family.person(self._mother_id)
-        else:
-            mother = Person(mother_id)
-        if (app_config['exclude_distant_history'].lower() == 'true'
-            and mother.spurious):
+        try:
+            if self.family:
+                mother = self.family.person(self._mother_id)
+            else:
+                mother = Person(mother_id)
+            return mother
+        except SpuriousConnection:
             return None
-        return mother
 
     @cached_property
     def parents(self):
@@ -644,9 +644,21 @@ class Relationship:
 
         return None
 
+class SpuriousConnection(Exception):
+    pass
+
 class Database:
     def __init__(self):
         self.db_config = load_config('postgresql')
+        self.app_config = load_config('family_tree')
+        if self.app_config['exclude_distant_history'].lower() == 'true':
+            self.exclude_spurious = True
+            self.where_condition = "WHERE spurious = 'FALSE'"
+            self.and_condition = "AND spurious = 'FALSE'"
+        else:
+            self.exclude_spurious = False
+            self.where_condition = ''
+            self.and_condition = ''
         self.MPHONE_LEN = 15
 
     @staticmethod
@@ -690,9 +702,10 @@ class Database:
 
     def get_ids(self):
         """Return a list of all active IDs in the `people` table."""
-        sql = """SELECT person_id
-                   FROM people
-                  ORDER BY person_id ASC;"""
+        sql = f"""SELECT person_id
+                    FROM people
+                         {self.where_condition}
+                   ORDER BY person_id ASC;"""
         return tuple(x['person_id'] for x in self.get_all_records(sql))
 
     def get_people(self, match=None):
@@ -700,22 +713,25 @@ class Database:
            containing `match`.
            Otherwise, return the entire contents of the `people` table."""
         if match is None:
-            sql = """SELECT *
-                       FROM people
-                      ORDER BY spurious ASC,
-                               person_id ASC;"""
+            sql = f"""SELECT *
+                        FROM people
+                             {self.where_condition}
+                       ORDER BY spurious ASC,
+                                person_id ASC;"""
             return self.get_all_records(sql)
         wildcard_match = f'%{match}%'
-        sql = """SELECT *
-                   FROM people
-                  WHERE person_name ILIKE %s
-                  ORDER BY spurious ASC,
-                           person_id ASC;"""
+        sql = f"""SELECT *
+                    FROM people
+                   WHERE person_name ILIKE %s
+                         {self.and_condition}
+                   ORDER BY spurious ASC,
+                            person_id ASC;"""
         results = self.get_all_records(sql, wildcard_match)
         if not results:
             sql = f"""SELECT *
                         FROM people
                        WHERE METAPHONE(person_name, {self.MPHONE_LEN})
+                             {self.and_condition}
                         LIKE '%%' || METAPHONE(%s, {self.MPHONE_LEN}) || '%%'
                        ORDER BY spurious ASC,
                                 SIMILARITY(%s, person_name) DESC;"""
@@ -725,23 +741,27 @@ class Database:
     def get_person(self, match):
         """For a given ID or name, return a single matching person."""
         if type(match) is int or (type(match) is str and match.isnumeric()):
-            sql = """SELECT *
-                       FROM people
-                      WHERE person_id = %s;"""
+            sql = f"""SELECT *
+                        FROM people
+                       WHERE person_id = %s;"""
             result = self.get_all_records(sql, match)
+            if self.exclude_spurious and result[0]['spurious']:
+                raise SpuriousConnection
         else:
             wildcard_match = f'%{match}%'
-            sql = """SELECT *
-                       FROM people
-                      WHERE person_name ILIKE %s
-                      ORDER BY spurious ASC,
-                               person_id ASC;"""
+            sql = f"""SELECT *
+                        FROM people
+                       WHERE person_name ILIKE %s
+                             {self.and_condition}
+                       ORDER BY spurious ASC,
+                                person_id ASC;"""
             result = self.get_all_records(sql, wildcard_match)
         if not result:
             sql = f"""SELECT *
                         FROM people
                        WHERE METAPHONE(person_name, {self.MPHONE_LEN})
                         LIKE '%%' || METAPHONE(%s, {self.MPHONE_LEN}) || '%%'
+                             {self.and_condition}
                        ORDER BY spurious ASC,
                                 SIMILARITY(%s, person_name) DESC;"""
             result = self.get_all_records(sql, (match, match))
@@ -853,16 +873,26 @@ class Database:
     def get_ancestors(self, id):
         """Return all ancestors of a given person
            nested within their children."""
-        person = self.get_person(id)
+        try:
+            person = self.get_person(id)
+        except SpuriousConnection:
+            return None
         if person['father_id']:
-            person['father'] = self.get_ancestors(person['father_id'])
+            father = self.get_ancestors(person['father_id'])
+            if father:
+                person['father'] = father
         if person['mother_id']:
-            person['mother'] = self.get_ancestors(person['mother_id'])
+            mother = self.get_ancestors(person['mother_id'])
+            if mother:
+                person['mother'] = mother
         return person
 
     def get_ancestors_flat(self, id):
         """Return all ancestors of a given person as a flat list."""
-        person = self.get_person(id)
+        try:
+            person = self.get_person(id)
+        except SpuriousConnection:
+            return []
         line = [person]
         if person['father_id']:
             line.extend(self.get_ancestors_flat(person['father_id']))

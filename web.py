@@ -6,7 +6,7 @@ from markupsafe import escape
 from flask_login import (LoginManager, UserMixin, login_required, login_user,
                          logout_user)
 
-from family_tree import Family, Person
+from family_tree import Family, Person, SpuriousConnection
 from config import load_config
 from filters import parse_notes
 
@@ -48,26 +48,36 @@ def home():
 @app.route('/<int:id>')
 @login_required
 def person_page(id):
-    family = Family()
-    person = family.person(id)
-    if os.path.isfile(os.path.join('static', 'images', f'{id}.jpg')):
-        img_filename = f'images/{id}.jpg'
-    else:
-        img_filename = None
-    return render_template('person.html', person=person,
-                           img_filename=img_filename)
+    try:
+        family = Family()
+        person = family.person(id)
+        if os.path.isfile(os.path.join('static', 'images', f'{id}.jpg')):
+            img_filename = f'images/{id}.jpg'
+        else:
+            img_filename = None
+        return render_template('person.html', person=person,
+                            img_filename=img_filename)
+    except IndexError:
+        return person_not_found()
+    except SpuriousConnection:
+        return person_not_found()
 
 @app.route('/<int:id_a>/<int:id_b>')
 @login_required
 def relatives(id_a, id_b):
-    family = Family()
-    family.add_all()
-    person_a = family.person(id_a)
-    person_b = family.person(id_b)
-    kinship = person_a.kinship_term(person_b)
-    return render_template('relatives.html',
-                           person_a=person_a, person_b=person_b,
-                           kinship=kinship)
+    try:
+        family = Family()
+        family.add_all()
+        person_a = family.person(id_a)
+        person_b = family.person(id_b)
+        kinship = person_a.kinship_term(person_b)
+        return render_template('relatives.html',
+                            person_a=person_a, person_b=person_b,
+                            kinship=kinship)
+    except IndexError:
+        return person_not_found()
+    except SpuriousConnection:
+        return person_not_found()
 
 @app.route('/search/')
 @login_required
@@ -98,3 +108,10 @@ def check_password():
 def logout():
     logout_user()
     return redirect(url_for('password_page'))
+
+@app.errorhandler(404)
+def no_route(e):
+    return render_template('no_route.html')
+    
+def person_not_found():
+    return render_template('person_not_found.html')
