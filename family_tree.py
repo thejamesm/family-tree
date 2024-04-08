@@ -390,6 +390,7 @@ class Person:
                 self.get_longest_descendant_line()[1:])
 
     def kinship_term(self, person):
+
         def calc_term(short, diff, gender):
             match short, diff, gender:
                 case 0, 0, _:
@@ -452,41 +453,150 @@ class Person:
                     return 'cousin'
             return None
 
+        def calc_spousal_term(short, diff, gender):
+            match short, diff,  gender:
+                case 0, 0, 'male':
+                    return 'husband'
+                case 0, 0, 'female':
+                    return 'wife'
+                case 0, 0, _:
+                    return 'spouse'
+                case 1, 0, 'male':
+                    return 'brother-in-law'
+                case 1, 0, 'female':
+                    return 'sister-in-law'
+                case 1, 0, _:
+                    return 'sibling-in-law'
+                case 0, 1, 'male':
+                    return 'father-in-law'
+                case 0, 1, 'female':
+                    return 'mother-in-law'
+                case 0, 1, _:
+                    return 'parent-in-law'
+                case 0, -1, 'male':
+                    return 'stepson'
+                case 0, -1, 'female':
+                    return 'stepdaughter'
+                case 0, -1, _:
+                    return 'stepchild'
+                case 1, -1, 'male':
+                    return 'nephew by marriage'
+                case 1, -1, 'female':
+                    return 'niece by marriage'
+                case 1, -1, _:
+                    return 'spouse’s sibling’s child'
+                case 0, 2, 'male':
+                    return 'grandfather-in-law'
+                case 0, 2, 'female':
+                    return 'grandmother-in-law'
+                case 0, 2, _:
+                    return 'grandparent-in-law'
+            return None
+
+        def calc_affine_term(short, diff, gender):
+            match short, diff, gender:
+                case 1, 0, 'male':
+                    return 'brother-in-law'
+                case 1, 0, 'female':
+                    return 'sister-in-law'
+                case 1, 0, _:
+                    return 'sibling-in-law'
+                case 0, 1, 'male':
+                    return 'stepfather'
+                case 0, 1, 'female':
+                    return 'stepmother'
+                case 0, 1, _:
+                    return 'step-parent'
+                case 0, -1, 'male':
+                    return 'son-in-law'
+                case 0, -1, 'female':
+                    return 'daughter-in-law'
+                case 1, 1, 'male':
+                    return 'uncle by marriage'
+                case 1, 1, 'female':
+                    return 'aunt by marriage'
+                case 1, 2, 'male':
+                    return 'great uncle by marriage'
+                case 1, 2, 'female':
+                    return 'great aunt by marriage'
+            return None
+
+        def calc_extended_term(short, diff, gender):
+            p = self.family.inflect_engine
+            if short in (0, 1):
+                levels = abs(diff) - 2
+                if levels <= int(app_config['max_great_levels']):
+                    prefix = '-'.join(('great',) * levels) + ' grand'
+                else:
+                    prefix = (p.number_to_words(p.ordinal(levels)) +
+                            '-great grand')
+                sign = 1 if diff > 0 else -1
+                return prefix + calc_term(short, sign, gender)
+            term = p.number_to_words(p.ordinal(short-1)) + ' cousin'
+            if diff:
+                diff = abs(diff)
+                match diff:
+                    case 1:
+                        removal = 'once'
+                    case 2:
+                        removal = 'twice'
+                    case 3:
+                        removal = 'thrice'
+                    case _:
+                        removal = p.number_to_words(diff) + ' times'
+                term = f'{term} {removal} removed'
+            return term
+
+        prefix = ''
+        suffix = ''
+
         if not (family := self.family):
             family = Family()
         kinship = family.kinship(self, person)
-        if not kinship:
-            return 'no blood relation'
-        _, short, diff = kinship
+        if kinship:
+            _, short, diff = kinship
+            term = calc_term(short, diff, person.gender)
+        else:
+            for partner in [r.partner for r in self.relationships
+                            if r.type == 'marriage']:
+                kinship = family.kinship(partner, person)
+                if kinship:
+                    _, short, diff = kinship
+                    term = calc_spousal_term(short, diff, person.gender)
+                    if not term:
+                        term = calc_term(short, diff, person.gender)
+                        match partner.gender:
+                            case 'male':
+                                prefix = 'husband’s '
+                            case 'female':
+                                prefix = 'wife’s '
+                            case _:
+                                prefix = 'spouse’s '
+                    break
+            if not kinship:
+                for partner in [r.partner for r in person.relationships
+                                if r.type == 'marriage']:
+                    kinship = family.kinship(self, partner)
+                    if kinship:
+                        _, short, diff = kinship
+                        term = calc_affine_term(short, diff, person.gender)
+                        if not term:
+                            term = calc_term(short, diff, partner.gender)
+                            match person.gender:
+                                case 'male':
+                                    suffix = '’s husband'
+                                case 'female':
+                                    suffix = '’s wife'
+                                case _:
+                                    suffix = '’s spouse'
+                        break
+            if not kinship:
+                return 'no blood relation'
 
-        if term := calc_term(short, diff, person.gender):
-            return term
+        if not term:
+            term = calc_extended_term(short, diff, person.gender)
 
-        p = self.family.inflect_engine
-        if short in (0, 1):
-            levels = abs(diff) - 2
-            if levels <= int(app_config['max_great_levels']):
-                prefix = '-'.join(('great',) * levels) + ' grand'
-            else:
-                prefix = (p.number_to_words(p.ordinal(levels)) +
-                          '-great grand')
-            sign = 1 if diff > 0 else -1
-            return prefix + calc_term(short, sign, person.gender)
-
-        term = p.number_to_words(p.ordinal(short-1)) + ' cousin'
-        if diff:
-            diff = abs(diff)
-            match diff:
-                case 1:
-                    removal = 'once'
-                case 2:
-                    removal = 'twice'
-                case 3:
-                    removal = 'thrice'
-                case _:
-                    removal = p.number_to_words(diff) + ' times'
-            term = f'{term} {removal} removed'
-        return term
+        return prefix + term + suffix
 
 class PersonEncoder(json.JSONEncoder):
     def default(self, obj):
