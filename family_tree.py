@@ -3,6 +3,7 @@ import json
 import os
 from datetime import date
 from functools import cached_property
+from collections import defaultdict
 
 import inflect
 
@@ -30,9 +31,10 @@ class Family:
         return self.people[id]
 
     def add_all(self):
-        for record in Database().get_people():
+        for record in self.db.get_people():
             Person(record=record, family=self)
         self.people = dict(sorted(self.people.items()))
+        self.child_ids = self.db.get_parent_child_id_pairs()
 
     def search(self, search_string):
         return {p[0]: p[1] for p in self.people.items()
@@ -269,7 +271,10 @@ class Person:
 
     @cached_property
     def children(self):
-        child_ids = Database().get_child_ids(self.id)
+        if self.family and self.family.child_ids:
+            child_ids = self.family.child_ids[self.id]
+        else:
+            child_ids = Database().get_child_ids(self.id)
         if self.family:
             children = [self.family.person(child_id)
                         for child_id in child_ids]
@@ -789,6 +794,27 @@ class Database:
         if not (records := self.get_all_records(sql, id)):
             return tuple()
         return tuple(x['person_id'] for x in records)
+
+    def get_parent_child_id_pairs(self):
+        """Return all pairs of parent and child ID numbers."""
+        sql = """(SELECT father_id AS parent_id,
+                         person_id AS child_id
+                    FROM people
+                   WHERE father_id IS NOT NULL
+                   ORDER BY father_id,
+                            person_id)
+                 UNION ALL
+                 (SELECT mother_id AS parent_id,
+                         person_id AS child_id
+                    FROM people
+                   WHERE mother_id IS NOT NULL
+                   ORDER BY mother_id,
+                            person_id);"""
+        records = self.get_all_records(sql)
+        output = defaultdict(list)
+        for record in records:
+            output[record['parent_id']].append(record['child_id'])
+        return output
 
     def get_siblings(self, id):
         """Return a list of people who share one or both of the given
