@@ -714,6 +714,24 @@ class Relationship:
     def description(self):
         return ', '.join(filter(None, (self.started, self.ended))) or None
 
+    @cached_property
+    def children(self):
+        person_a, person_b = self.people
+        family = person_a.family or person_b.family
+        if family and family.child_ids:
+            child_ids_a = family.child_ids[person_a.id]
+            child_ids_b = family.child_ids[person_b.id]
+        else:
+            child_ids_a = Database().get_child_ids(person_a.id)
+            child_ids_b = Database().get_child_ids(person_b.id)
+        child_ids = list(set(child_ids_a) & set(child_ids_b))
+        if family:
+            children = [family.person(child_id)
+                        for child_id in child_ids]
+        else:
+            children = [Person(child_id) for child_id in child_ids]
+        return sorted(children, key=lambda child: child.dob or date.max)
+
     def end_type_description(self, noun=True, until=False):
         def death_description():
             per_a, per_b = self.people
