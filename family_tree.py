@@ -280,7 +280,7 @@ class Person:
                         for child_id in child_ids]
         else:
             children = [Person(child_id) for child_id in child_ids]
-        return sorted(children, key=lambda child: child.dob)
+        return sorted(children, key=lambda child: child.dob or date.max)
 
     @cached_property
     def siblings(self):
