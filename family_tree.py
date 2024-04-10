@@ -37,8 +37,8 @@ class Family:
         self.child_ids = self.db.get_parent_child_id_pairs()
 
     def search(self, search_string):
-        return {p[0]: p[1] for p in self.people.items()
-                if search_string.lower() in p[1].name.lower()}
+        return [p for p in self.people.values()
+                if search_string.lower() in p.name.lower()]
 
     def save(self):
         with open(r'family_tree.json', mode='w', encoding='utf-8') as f:
