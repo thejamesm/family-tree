@@ -50,7 +50,10 @@ class Family:
 
     def get_relationship(self, person_a, person_b):
         person_a, person_b = Person.sorted_ids(person_a, person_b)
-        return self.relationships[(person_a, person_b)]
+        try:
+            return self.relationships[(person_a, person_b)]
+        except KeyError:
+            return None
 
     def get_longest_line(self):
         return max([p.get_longest_line() for p in self.people.values()],
