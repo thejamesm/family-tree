@@ -66,8 +66,7 @@ def person_page(id):
 @login_required
 def relatives(id_a, id_b):
     try:
-        family = Family()
-        family.add_all()
+        family = Family(True)
         person_a = family.person(id_a)
         person_b = family.person(id_b)
         kinship = person_a.kinship_term(person_b)
