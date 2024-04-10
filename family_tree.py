@@ -35,6 +35,9 @@ class Family:
             Person(record=record, family=self)
         self.people = dict(sorted(self.people.items()))
         self.child_ids = self.db.get_parent_child_id_pairs()
+        self.relationships = {(r['person_a_id'], r['person_b_id']):
+                              Relationship(family=self, record=r)
+                              for r in self.db.get_relationships()}
 
     def search(self, search_string):
         return [p for p in self.people.values()
@@ -45,8 +48,12 @@ class Family:
             json.dump(list(self.people.values()), f, cls=PersonEncoder,
                       indent=4, ensure_ascii=False)
 
+    def get_relationship(self, person_a, person_b):
+        person_a, person_b = Person.sorted_ids(person_a, person_b)
+        return self.relationships[(person_a, person_b)]
+
     def get_longest_line(self):
-        return max([person.get_longest_line() for person in self.people.values()],
+        return max([p.get_longest_line() for p in self.people.values()],
                    key=len)
 
     def kinship(self, person_a, person_b):
@@ -108,6 +115,14 @@ class Person:
     def search(cls, search_string, family=None):
         return [Person(record=record, family=family)
                 for record in Database().get_people(search_string)]
+
+    @classmethod
+    def sorted_ids(cls, *people):
+        people = list(people)
+        for index, person in enumerate(people):
+            if type(person) is Person:
+                people[index] = person.id
+        return tuple(sorted(people))
 
     _pattern_parts = (('%#d', '%B', '%Y') if os.name == 'nt'
                       else ('%-d', '%B', '%Y'))
@@ -626,7 +641,21 @@ class PersonEncoder(json.JSONEncoder):
         return super().default(obj)
 
 class Relationship:
-    def __init__(self, person_a, person_b, record):
+    def __init__(self, person_a=None, person_b=None, family=None, record=None):
+        if not ((person_a and person_b) or record):
+            raise ValueError('Insufficient data to describe relationship.')
+        if not (person_a and person_b):
+            if family:
+                person_a = family.people[record['person_a_id']]
+                person_b = family.people[record['person_b_id']]
+            else:
+                person_a = Person(record['person_a_id'])
+                person_b = Person(record['person_b_id'])
+        elif not record:
+            if family:
+                record = family.db.get_relationship(person_a, person_b)
+            else:
+                record = Database().get_relationship(person_a, person_b)
         self.id = record['relationship_id']
         self.type = record['relationship_type']
         self.people = (person_a, person_b)
@@ -1066,6 +1095,37 @@ class Database:
                            r.start_date ASC,
                            r.relationship_id ASC;"""
         return self.get_all_records(sql, (id, id))
+
+    def get_relationship(self, person_a, person_b):
+        """Get the relationship record for two given people."""
+        sql = """SELECT *
+                   FROM relationships
+                  WHERE person_a_id = %s
+                    AND person_b_id = %s
+                  ORDER BY relationship_id;"""
+        person_a, person_b = Person.sorted_ids(person_a, person_b)
+        result = self.get_all_records(sql, (person_a, person_b))[0]
+        if not result:
+            raise ValueError('Relationship not found.')
+        return result
+
+    def get_relationships(self):
+        """Get all relationships."""
+        if self.exclude_spurious:
+            sql = """SELECT *
+                       FROM relationships AS r
+                       JOIN people AS a
+                         ON a.person_id = r.person_a_id
+                       JOIN people AS b
+                         ON b.person_id = r.person_b_id
+                      WHERE a.spurious = 'FALSE'
+                        AND b.spurious = 'FALSE'
+                      ORDER BY r.relationship_id;"""
+        else:
+            sql = """SELECT *
+                    FROM relationships
+                    ORDER BY relationship_id;"""
+        return self.get_all_records(sql)
 
 if __name__ == '__main__':
     family = Family()
