@@ -12,10 +12,12 @@ from config import load_config
 app_config = load_config('family_tree')
 
 class Family:
-    def __init__(self):
+    def __init__(self, add_all=False):
         self.people = {}
         self.db = Database()
         self.inflect_engine = inflect.engine()
+        if add_all:
+            self.add_all()
 
     def person(self, person):
         if type(person) is Person:
