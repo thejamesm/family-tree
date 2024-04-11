@@ -331,7 +331,9 @@ class Person:
         output = []
         for record in records:
             partner = family.person(record['person_id'])
-            output.append(Relationship(self, partner, record))
+            relationship = (family.get_relationship(self, partner) or
+                            Relationship(self, partner, record=record))
+            output.append(relationship)
         return output
 
     def json(self):
