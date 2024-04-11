@@ -4,6 +4,7 @@ import os
 from datetime import date
 from functools import cached_property
 from collections import defaultdict
+from uuid import uuid4
 
 import inflect
 
@@ -14,6 +15,8 @@ app_config = load_config('family_tree')
 class Family:
     def __init__(self, add_all=False):
         self.people = {}
+        self.child_ids = {}
+        self.relationships = {}
         self.db = Database()
         self.inflect_engine = inflect.engine()
         if add_all:
@@ -50,12 +53,30 @@ class Family:
             json.dump(list(self.people.values()), f, cls=PersonEncoder,
                       indent=4, ensure_ascii=False)
 
+    def get_child_ids(self, person):
+        if type(person) is Person:
+            person = person.id
+        if person in self.child_ids:
+            return self.child_ids[person]
+        else:
+            return []
+
     def get_relationship(self, person_a, person_b):
         person_a, person_b = Person.sorted_ids(person_a, person_b)
         try:
             return self.relationships[(person_a, person_b)]
         except KeyError:
             return None
+
+    def add_relationship(self, person_a, person_b):
+        rel = Relationship(person_a, person_b, family=self, blank_record=True)
+        self.relationships[tuple(p.id for p in rel.people)] = rel
+        return rel
+
+    def relationship(self, person_a, person_b):
+        if not (relationship := self.get_relationship(person_a, person_b)):
+            relationship = self.add_relationship(person_a, person_b)
+        return relationship
 
     def get_longest_line(self):
         return max([p.get_longest_line() for p in self.people.values()],
@@ -648,7 +669,8 @@ class PersonEncoder(json.JSONEncoder):
         return super().default(obj)
 
 class Relationship:
-    def __init__(self, person_a=None, person_b=None, family=None, record=None):
+    def __init__(self, person_a=None, person_b=None, family=None, record=None,
+                 blank_record=False):
         if not ((person_a and person_b) or record):
             raise ValueError('Insufficient data to describe relationship.')
         if not (person_a and person_b):
@@ -658,6 +680,28 @@ class Relationship:
             else:
                 person_a = Person(record['person_a_id'])
                 person_b = Person(record['person_b_id'])
+        else:
+            if type(person_a) is int:
+                if family:
+                    person_a = family.people[person_a]
+                else:
+                    person_a = Person(person_a)
+            if type(person_b) is int:
+                if family:
+                    person_b = family.people[person_b]
+                else:
+                    person_b = Person(person_b)
+        if blank_record:
+            record = {
+                    'relationship_id': str(uuid4()),
+                    'relationship_type': 'marriage',
+                    'start_date': None,
+                    'start_date_precision': 3,
+                    'place': None,
+                    'end_date': None,
+                    'end_date_precision': 3,
+                    'end_type': None
+                }
         elif not record:
             if family:
                 record = family.db.get_relationship(person_a, person_b)
@@ -755,8 +799,8 @@ class Relationship:
         person_a, person_b = self.people
         family = person_a.family or person_b.family
         if family and family.child_ids:
-            child_ids_a = family.child_ids[person_a.id]
-            child_ids_b = family.child_ids[person_b.id]
+            child_ids_a = family.get_child_ids(person_a.id)
+            child_ids_b = family.get_child_ids(person_b.id)
         else:
             child_ids_a = Database().get_child_ids(person_a.id)
             child_ids_b = Database().get_child_ids(person_b.id)
@@ -978,7 +1022,7 @@ class Database:
         output = defaultdict(list)
         for record in records:
             output[record['parent_id']].append(record['child_id'])
-        return output
+        return dict(output)
 
     def get_siblings(self, id):
         """Return a list of people who share one or both of the given
