@@ -3,3 +3,4 @@
 *.ini
 family_tree.json
 static/images
+static/trees
