@@ -312,16 +312,19 @@ class Person:
 
     @cached_property
     def children(self):
-        if self.family and self.family.child_ids:
-            child_ids = self.family.child_ids[self.id]
-        else:
-            child_ids = Database().get_child_ids(self.id)
-        if self.family:
-            children = [self.family.person(child_id)
-                        for child_id in child_ids]
-        else:
-            children = [Person(child_id) for child_id in child_ids]
-        return sorted(children, key=lambda child: child.dob or date.max)
+        try:
+            if self.family and self.family.child_ids:
+                child_ids = self.family.child_ids[self.id]
+            else:
+                child_ids = Database().get_child_ids(self.id)
+            if self.family:
+                children = [self.family.person(child_id)
+                            for child_id in child_ids]
+            else:
+                children = [Person(child_id) for child_id in child_ids]
+            return sorted(children, key=lambda child: child.dob or date.max)
+        except KeyError:
+            return []
 
     @cached_property
     def siblings(self):
