@@ -49,7 +49,7 @@ def home():
 @login_required
 def person_page(id):
     try:
-        family = Family()
+        family = Family(True)
         person = family.person(id)
         if os.path.isfile(os.path.join('static', 'images', f'{id}.jpg')):
             img_filename = f'images/{id}.jpg'
