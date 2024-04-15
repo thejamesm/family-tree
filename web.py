@@ -1,7 +1,7 @@
 import os.path
 
 from flask import (Flask, render_template, request, redirect, url_for, flash,
-                   session)
+                   session, send_from_directory)
 from markupsafe import escape
 from flask_login import (LoginManager, UserMixin, login_required, login_user,
                          logout_user)
@@ -16,12 +16,12 @@ class User(UserMixin):
 
 class SecuredImagesFlask(Flask):
     def send_static_file(self, filename):
-        if filename.startswith('images/'):
-            return self.image_loader(filename)
+        if filename.startswith('images/') or filename.startswith('trees/'):
+            return self.asset_loader(filename)
         return super().send_static_file(filename)
 
     @login_required
-    def image_loader(self, filename):
+    def asset_loader(self, filename):
         return super().send_static_file(filename)
 
 config = load_config('authentication')
@@ -57,6 +57,26 @@ def person_page(id):
             img_filename = None
         return render_template('person.html', person=person,
                             img_filename=img_filename)
+    except IndexError:
+        return person_not_found()
+    except SpuriousConnection:
+        return person_not_found()
+
+@app.route('/tree/<int:id>')
+@login_required
+def person_tree(id):
+    path = os.path.join('static', 'trees', f'{id}.svg')
+    print(path)
+    if os.path.isfile(path):
+        print('isfile')
+        return redirect(url_for('static', filename=f'trees/{id}.svg'))
+    print('isntfile')
+    import draw_tree
+    try:
+        family = Family(True)
+        subject = family.person(id)
+        draw_tree.Tree(subject)
+        return redirect(url_for('static', filename=f'trees/{id}.svg'))
     except IndexError:
         return person_not_found()
     except SpuriousConnection:
