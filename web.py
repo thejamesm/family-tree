@@ -65,14 +65,13 @@ def person_page(id):
 @app.route('/tree/<int:id>')
 @login_required
 def person_tree(id):
-    path = os.path.join('static', 'trees', f'{id}.svg')
-    if os.path.isfile(path):
-        return redirect(url_for('static', filename=f'trees/{id}.svg'))
-    import draw_tree
     try:
-        family = Family(True)
-        subject = family.person(id)
-        draw_tree.Tree(subject)
+        path = os.path.join('static', 'trees', f'{id}.svg')
+        if not os.path.isfile(path):
+            import draw_tree
+            family = Family(True)
+            subject = family.person(id)
+            draw_tree.Tree(subject)
         return redirect(url_for('static', filename=f'trees/{id}.svg'))
     except IndexError:
         return person_not_found()
