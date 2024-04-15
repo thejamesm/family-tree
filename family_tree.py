@@ -455,6 +455,51 @@ class Person:
         return (self.get_longest_ancestor_line() +
                 self.get_longest_descendant_line()[1:])
 
+    def get_ancestor_layers(self, level=0, layers=None):
+        if layers is None:
+            layers = []
+        if level >= len(layers):
+            layers.append({
+                    'groups': defaultdict(set),
+                    'edges': {}
+                })
+        parents = [None, None]
+        if self.father:
+            parents[0] = self.father
+            self.father.get_ancestor_layers(level=level+1, layers=layers)
+        if self.mother:
+            parents[1] = self.mother
+            self.mother.get_ancestor_layers(level=level+1, layers=layers)
+        for parent in [p for p in parents if p]:
+                layers[level]['groups'][parent.parents_id].add(parent)
+        if all(parents):
+            layers[level]['edges'][self.parents_id] = (self.father, self.mother)
+        if level == 0:
+            return layers[-2::-1]   # Exclude empty final layer and reverse
+
+    def get_descendant_layers(self, level=0, layers=None):
+        if layers is None:
+            layers = []
+        if self.children:
+            if level >= len(layers):
+                layers.append({
+                        'groups': defaultdict(set),
+                        'edges': {}
+                    })
+            for child in self.children:
+                layers[level]['groups'][child.parents_id].add(child)
+                child.get_descendant_layers(level=level+1, layers=layers)
+        if level == 0:
+            return layers
+
+    def get_layers(self):
+        own_layer = [{
+                'groups': {self.parents_id: {self}},
+                'edges': {}
+            }]
+        return (self.get_ancestor_layers() + own_layer +
+                self.get_descendant_layers())
+
     def kinship_term(self, person):
 
         def calc_term(short, diff, gender):
