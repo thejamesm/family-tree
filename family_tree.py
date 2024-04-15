@@ -460,7 +460,7 @@ class Person:
             layers = []
         if level >= len(layers):
             layers.append({
-                    'groups': defaultdict(set),
+                    'groups': defaultdict(list),
                     'edges': {}
                 })
         parents = [None, None]
@@ -470,8 +470,9 @@ class Person:
         if self.mother:
             parents[1] = self.mother
             self.mother.get_ancestor_layers(level=level+1, layers=layers)
-        for parent in [p for p in parents if p]:
-                layers[level]['groups'][parent.parents_id].add(parent)
+        for parent in [p for p in parents
+                       if p and p not in layers[level]['groups'][p.parents_id]]:
+                layers[level]['groups'][parent.parents_id].append(parent)
         if all(parents):
             layers[level]['edges'][self.parents_id] = (self.father, self.mother)
         if level == 0:
@@ -483,18 +484,19 @@ class Person:
         if self.children:
             if level >= len(layers):
                 layers.append({
-                        'groups': defaultdict(set),
+                        'groups': defaultdict(list),
                         'edges': {}
                     })
-            for child in self.children:
-                layers[level]['groups'][child.parents_id].add(child)
+            for child in [c for c in self.children
+                          if c not in layers[level]['groups'][c.parents_id]]:
+                layers[level]['groups'][child.parents_id].append(child)
                 child.get_descendant_layers(level=level+1, layers=layers)
         if level == 0:
             return layers
 
     def get_layers(self):
         own_layer = [{
-                'groups': {self.parents_id: {self}},
+                'groups': {self.parents_id: [self]},
                 'edges': {}
             }]
         return (self.get_ancestor_layers() + own_layer +

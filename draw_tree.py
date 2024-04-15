@@ -15,8 +15,6 @@ class Tree:
         self.invis_edge = {'_attributes': {'style': 'invis'}}
         self.married_edge = {}
         self.unmarried_edge = {'_attributes': {'style': 'dashed'}}
-        self.non_const = {'_attributes': {'constraint': 'false',
-                                          'style': 'invis'}}
 
         self.graph = Digraph('neato',
                              format='svg',
@@ -83,11 +81,9 @@ class Tree:
                 person_subgraph.node(couple_id, **self.invis_node)
                 person_subgraph.edge(str(left.id), couple_id, **join_style)
                 person_subgraph.edge(couple_id, str(right.id), **join_style)
-                person_subgraph.edge(str(left.id), str(right.id),
-                                     **self.invis_edge)
                 if prev_id:
                     person_subgraph.edge(prev_id, str(left.id),
-                                         **self.non_const)
+                                         **self.invis_edge)
                 prev_id = str(right.id)
 
 
