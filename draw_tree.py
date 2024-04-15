@@ -62,6 +62,7 @@ class Tree:
         self.draw_layer(layers[0], first_layer=True)
         for layer in layers[1:]:
             self.draw_layer(layer)
+        self.graph.render()
 
     def draw_layer(self, layer, first_layer=False):
         if not first_layer:
