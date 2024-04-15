@@ -480,6 +480,18 @@ class Person:
             return layers[-2::-1]   # Exclude empty final layer and reverse
 
     def get_descendant_layers(self, level=0, layers=None):
+        def add_edge(edges, id, father, mother):
+            lefts = [p[0] for p in edges.values()]
+            rights = [p[1] for p in edges.values()]
+            if ((father in lefts and father in rights) or
+                    (mother in rights and mother in lefts)):
+                return False
+            if father in lefts or mother in rights:
+                edges[id] = (mother, father)
+                return True
+            edges[id] = (father, mother)
+            return True
+
         if layers is None:
             layers = [{
                 'groups': defaultdict(list),
@@ -503,8 +515,8 @@ class Person:
                 for parent in child.parents:
                     if parent not in chain(*prev_layer['groups'].values()):
                         prev_layer['groups'][None].append(parent)
-                        prev_layer['edges'][child.parents_id] = (child.father,
-                                                                 child.mother)
+                        add_edge(prev_layer['edges'], child.parents_id,
+                                 child.father, child.mother)
                 child.get_descendant_layers(level=level+1, layers=layers)
         if outer_layer:
             return layers
