@@ -66,11 +66,8 @@ def person_page(id):
 @login_required
 def person_tree(id):
     path = os.path.join('static', 'trees', f'{id}.svg')
-    print(path)
     if os.path.isfile(path):
-        print('isfile')
         return redirect(url_for('static', filename=f'trees/{id}.svg'))
-    print('isntfile')
     import draw_tree
     try:
         family = Family(True)
