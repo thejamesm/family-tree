@@ -82,6 +82,16 @@ def person_tree(id):
     except SpuriousConnection:
         return person_not_found()
 
+@app.route('/clear_tree_cache')
+@login_required
+def clear_tree_cache():
+    directory = os.path.join('static', 'trees')
+    for filename in os.listdir(directory):
+        path = os.path.join(directory, filename)
+        if os.path.isfile(path):
+            os.unlink(path)
+    return home()
+
 @app.route('/<int:id_a>/<int:id_b>')
 @login_required
 def relatives(id_a, id_b):
