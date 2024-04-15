@@ -49,22 +49,24 @@ class Tree:
                 for parents_id, group in [g for g in layer['groups'].items()
                                           if g[0]]:
                     people = list(group)
-                    head_nodes = []
-                    for person in people[1:-1]:
-                        node_id = f'n{person.id}'
-                        line_subgraph.node(node_id, **self.invis_node)
-                        line_subgraph.edge(node_id, str(person.id))
-                        head_nodes.append(node_id)
-                    n_nodes = len(head_nodes)
-                    if n_nodes % 2 == 0:
-                        node_id = f'b{parents_id}'
-                        head_nodes.insert(n_nodes // 2, node_id)
-                        line_subgraph.node(node_id, **self.invis_node)
-                    line_subgraph.edge(parents_id, head_nodes[n_nodes // 2])
-                    for prev_id, cur in zip(head_nodes, head_nodes[1:]):
-                        line_subgraph.edge(str(prev_id.id), str(cur.id))
-                    line_subgraph.edge(head_nodes[0], str(people[0].id))
-                    if len(people) > 1:
+                    if len(people) == 1:
+                        line_subgraph.edge(str(parents_id), str(people[0].id))
+                    else:
+                        head_nodes = []
+                        for person in people[1:-1]:
+                            node_id = f'n{person.id}'
+                            line_subgraph.node(node_id, **self.invis_node)
+                            line_subgraph.edge(node_id, str(person.id))
+                            head_nodes.append(node_id)
+                        n_nodes = len(head_nodes)
+                        if n_nodes % 2 == 0:
+                            node_id = f'b{parents_id}'
+                            head_nodes.insert(n_nodes // 2, node_id)
+                            line_subgraph.node(node_id, **self.invis_node)
+                        line_subgraph.edge(parents_id, head_nodes[n_nodes // 2])
+                        for prev_id, cur in zip(head_nodes, head_nodes[1:]):
+                            line_subgraph.edge(prev_id, cur)
+                        line_subgraph.edge(head_nodes[0], str(people[0].id))
                         line_subgraph.edge(head_nodes[-1], str(people[-1].id))
         with self.graph.subgraph() as person_subgraph:
             person_subgraph.attr(rank='same')
@@ -90,5 +92,5 @@ class Tree:
 if __name__ == '__main__':
     family = Family()
     family.add_all()
-    tree = Tree(family.people[1])
+    tree = Tree(family.people[5])
     tree.graph.view()
