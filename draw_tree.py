@@ -56,6 +56,8 @@ class Tree:
                                           'style': 'filled'},
                                edge_attr={'dir': 'none'})
 
+        self.family = subject.family
+
         layers = subject.get_layers()
         self.draw_layer(layers[0], first_layer=True)
         for layer in layers[1:]:
@@ -93,8 +95,8 @@ class Tree:
                     person_subgraph.node(person)
             prev_id = None
             for couple_id, (left, right) in layer['edges'].items():
-                if ((relationship := family.get_relationship(left, right)) and
-                        relationship.type == 'marriage'):
+                if ((relationship := self.family.get_relationship(left, right))
+                        and relationship.type == 'marriage'):
                     join_style = TreeGraph.MARRIED_EDGE
                 else:
                     join_style = TreeGraph.UNMARRIED_EDGE
