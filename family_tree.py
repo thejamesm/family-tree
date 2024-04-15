@@ -2,7 +2,7 @@ import psycopg2
 import json
 import os
 from datetime import date
-from functools import cached_property
+from functools import cached_property, lru_cache
 from collections import defaultdict
 from uuid import uuid4
 
@@ -77,6 +77,19 @@ class Family:
         if not (relationship := self.get_relationship(person_a, person_b)):
             relationship = self.add_relationship(person_a, person_b)
         return relationship
+
+    @lru_cache(maxsize=128)
+    def get_parents_id(self, father, mother):
+        if father and mother:
+            if relationship := self.get_relationship(father, mother):
+                return f'r{relationship.id}'
+            else:
+                return f'{father.id}_{mother.id}'
+        elif father:
+            return f'{father.id}_x'
+        elif mother:
+            return f'x_{mother.id}'
+        return None
 
     def get_longest_line(self):
         return max([p.get_longest_line() for p in self.people.values()],
@@ -309,6 +322,13 @@ class Person:
         if self.mother:
             parents.append(self.mother)
         return tuple(parents)
+
+    @cached_property
+    def parents_id(self):
+        if self.family:
+            return self.family.get_parents_id(self.father, self.mother)
+        else:
+            return Family().get_parents_id(self.father, self.mother)
 
     @cached_property
     def children(self):
