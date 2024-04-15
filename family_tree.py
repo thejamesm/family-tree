@@ -3,6 +3,7 @@ import json
 import os
 from datetime import date
 from functools import cached_property, lru_cache
+from itertools import chain
 from collections import defaultdict
 from uuid import uuid4
 
@@ -480,27 +481,36 @@ class Person:
 
     def get_descendant_layers(self, level=0, layers=None):
         if layers is None:
-            layers = []
+            layers = [{
+                'groups': defaultdict(list),
+                'edges': {}
+            }]
+            layers[0]['groups'][self.parents_id].append(self)
+            level = 1
+            outer_layer = True
+        else:
+            outer_layer = False
         if self.children:
             if level >= len(layers):
                 layers.append({
                         'groups': defaultdict(list),
                         'edges': {}
                     })
+            prev_layer = layers[level-1]
             for child in [c for c in self.children
                           if c not in layers[level]['groups'][c.parents_id]]:
                 layers[level]['groups'][child.parents_id].append(child)
+                for parent in child.parents:
+                    if parent not in chain(*prev_layer['groups'].values()):
+                        prev_layer['groups'][None].append(parent)
+                        prev_layer['edges'][child.parents_id] = (child.father,
+                                                                 child.mother)
                 child.get_descendant_layers(level=level+1, layers=layers)
-        if level == 0:
+        if outer_layer:
             return layers
 
     def get_layers(self):
-        own_layer = [{
-                'groups': {self.parents_id: [self]},
-                'edges': {}
-            }]
-        return (self.get_ancestor_layers() + own_layer +
-                self.get_descendant_layers())
+        return (self.get_ancestor_layers() + self.get_descendant_layers())
 
     def kinship_term(self, person):
 
