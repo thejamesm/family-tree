@@ -128,7 +128,7 @@ class Tree:
                 self.graph.edge(left.id, couple_id, join_style, weight=1000)
                 self.graph.edge(couple_id, right.id, join_style, weight=1000)
                 self.people_layer.insert(self.people_layer.index(right.id),
-                                                                 couple_id)
+                                         couple_id)
             for prev, cur in zip(self.people_layer, self.people_layer[1:]):
                 self.graph.edge(prev, cur, invis=True)
 
