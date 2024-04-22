@@ -9,7 +9,8 @@ class TreeGraph(Digraph):
     MARRIED_EDGE = {}
     UNMARRIED_EDGE = {'style': 'dashed'}
 
-    def node(self, id, label='', attributes={}, invis=False, **kwargs):
+    def node(self, id, label='', attributes={}, invis=False,
+             kinship_subject=None, **kwargs):
         if type(id) is Person:
             person = id
             id = person.id
@@ -18,6 +19,10 @@ class TreeGraph(Digraph):
                     'fillcolor': self.node_fill(person.gender),
                     'URL': url_for('person_page', id=person.id)
                 }
+            if kinship_subject:
+                attributes = attributes | {
+                        'tooltip': kinship_subject.kinship_term(person)
+                    }
         if invis:
             attributes = attributes | {'shape': 'point',
                                        'peripheries': '0',
@@ -47,7 +52,7 @@ class TreeGraph(Digraph):
                 return 'gray'
 
 class Tree:
-    def __init__(self, subject):
+    def __init__(self, subject, calculate_kinship=False):
         self.graph = TreeGraph('dot',
                                format='svg',
                                filename=f'static/trees/{subject.id}',
@@ -63,9 +68,15 @@ class Tree:
         self.subject = subject
         self.family = subject.family
 
+        if calculate_kinship:
+            self.kinship_subject = subject
+        else:
+            self.kinship_subject = None
+
         self.layers = subject.get_layers()
         for layer_number in range(len(self.layers)):
             self.draw_layer(layer_number)
+
         self.graph.render()
 
     def draw_layer(self, layer_number):
@@ -104,7 +115,8 @@ class Tree:
             self.people_layer = []
             person_subgraph.attr(rank='same')
             for person in layer['people']:
-                person_subgraph.node(person)
+                person_subgraph.node(person,
+                                     kinship_subject=self.kinship_subject)
                 self.people_layer.append(person.id)
             for couple_id, (left, right) in layer['edges'].items():
                 if ((relationship := self.family.get_relationship(left, right))
