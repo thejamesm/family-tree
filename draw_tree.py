@@ -51,50 +51,61 @@ class Tree:
         self.graph = TreeGraph('dot',
                                format='svg',
                                filename=f'static/trees/{subject.id}',
-                               graph_attr={'splines': 'ortho'},
+                               graph_attr={'splines': 'ortho',
+                                           'concentrate': 'true',
+                                           'tooltip': ' '},
                                node_attr={'shape': 'box',
-                                          'style': 'filled'},
-                               edge_attr={'dir': 'none'})
+                                          'style': 'filled',
+                                          'tooltip': ' '},
+                               edge_attr={'dir': 'none',
+                                          'tooltip': ' '})
 
+        self.subject = subject
         self.family = subject.family
 
-        layers = subject.get_layers()
-        self.draw_layer(layers[0], first_layer=True)
-        for layer in layers[1:]:
-            self.draw_layer(layer)
+        self.layers = subject.get_layers()
+        for layer_number in range(len(self.layers)):
+            self.draw_layer(layer_number)
         self.graph.render()
 
-    def draw_layer(self, layer, first_layer=False):
-        if not first_layer:
-            with self.graph.subgraph() as line_subgraph:
+    def draw_layer(self, layer_number):
+        layer = self.layers[layer_number]
+
+        if layer_number > 0:
+            with self.graph.subgraph(name=f'h{layer_number}') as line_subgraph:
+                line_subgraph.attr(rank='same')
                 for parents_id, group in [g for g in layer['groups'].items()
                                           if g[0]]:
                     people = list(group)
                     if len(people) == 1:
-                        line_subgraph.edge(parents_id, people[0].id)
+                        self.graph.edge(parents_id, people[0].id, weight=10000)
                     else:
                         head_nodes = []
                         for person in people[1:-1]:
                             node_id = f'n{person.id}'
                             line_subgraph.node(node_id, invis=True)
-                            line_subgraph.edge(node_id, person.id)
+                            self.graph.edge(node_id, person.id, weight=10000)
                             head_nodes.append(node_id)
                         n_nodes = len(head_nodes)
                         if n_nodes % 2 == 0:
                             node_id = f'b{parents_id}'
                             head_nodes.insert(n_nodes // 2, node_id)
                             line_subgraph.node(node_id, invis=True)
-                        line_subgraph.edge(parents_id, head_nodes[n_nodes // 2])
+                        self.graph.edge(parents_id, head_nodes[n_nodes // 2],
+                                           weight=10000)
                         for prev_id, cur in zip(head_nodes, head_nodes[1:]):
-                            line_subgraph.edge(prev_id, cur)
-                        line_subgraph.edge(head_nodes[0], people[0].id)
-                        line_subgraph.edge(head_nodes[-1], people[-1].id)
-        with self.graph.subgraph() as person_subgraph:
+                            self.graph.edge(prev_id, cur, weight=10)
+                        self.graph.edge(self.people_layer[0], head_nodes[0],
+                                        invis=True)
+                        self.graph.edge(head_nodes[0], people[0].id, weight=5)
+                        self.graph.edge(head_nodes[-1], people[-1].id, weight=5)
+
+        with self.graph.subgraph(name=f'p{layer_number}') as person_subgraph:
+            self.people_layer = []
             person_subgraph.attr(rank='same')
-            for people in layer['groups'].values():
-                for person in people:
-                    person_subgraph.node(person)
-            prev_id = None
+            for person in layer['people']:
+                person_subgraph.node(person)
+                self.people_layer.append(person.id)
             for couple_id, (left, right) in layer['edges'].items():
                 if ((relationship := self.family.get_relationship(left, right))
                         and relationship.type == 'marriage'):
@@ -102,12 +113,12 @@ class Tree:
                 else:
                     join_style = TreeGraph.UNMARRIED_EDGE
                 person_subgraph.node(couple_id, invis=True)
-                person_subgraph.edge(left.id, couple_id, join_style)
-                person_subgraph.edge(couple_id, right.id, join_style)
-                if prev_id:
-                    person_subgraph.edge(prev_id, left.id, invis=True)
-                prev_id = right.id
-
+                self.graph.edge(left.id, couple_id, join_style, weight=1000)
+                self.graph.edge(couple_id, right.id, join_style, weight=1000)
+                self.people_layer.insert(self.people_layer.index(right.id),
+                                                                 couple_id)
+            for prev, cur in zip(self.people_layer, self.people_layer[1:]):
+                self.graph.edge(prev, cur, invis=True)
 
 if __name__ == '__main__':
     family = Family()

@@ -456,11 +456,43 @@ class Person:
         return (self.get_longest_ancestor_line() +
                 self.get_longest_descendant_line()[1:])
 
+    def _add_edge(self, layer, id, father, mother):
+        edges = layer['edges']
+        people = layer['people']
+        lefts = [p[0] for p in edges.values()]
+        rights = [p[1] for p in edges.values()]
+        if ((father, mother) in edges.values() or
+                (mother, father) in edges.values()):
+            return True
+        if ((father in lefts and father in rights) or
+                (mother in rights and mother in lefts)):
+            return False
+        if father in lefts:
+            prev_index = list(edges.keys())[lefts.index(father)]
+            prev_mother = edges[prev_index][1]
+            edges[prev_index] = (prev_mother, father)
+            f_index = people.index(father)
+            m_index = people.index(prev_mother)
+            people[f_index], people[m_index] = people[m_index], people[f_index]
+        if mother in rights:
+            left = mother
+            right = father
+        else:
+            left = father
+            right = mother
+        if (right in people and left not in people):
+            people.insert(people.index(right), left)
+        if (left in people and right not in people):
+            people.insert(people.index(left)+1, right)
+        edges[id] = (left, right)
+        return True
+
     def get_ancestor_layers(self, level=0, layers=None):
         if layers is None:
             layers = []
         if level >= len(layers):
             layers.append({
+                    'people': [],
                     'groups': defaultdict(list),
                     'edges': {}
                 })
@@ -473,30 +505,22 @@ class Person:
             self.mother.get_ancestor_layers(level=level+1, layers=layers)
         for parent in [p for p in parents
                        if p and p not in layers[level]['groups'][p.parents_id]]:
+                layers[level]['people'].append(parent)
                 layers[level]['groups'][parent.parents_id].append(parent)
         if all(parents):
-            layers[level]['edges'][self.parents_id] = (self.father, self.mother)
+            self._add_edge(layers[level], self.parents_id,
+                           self.father, self.mother)
         if level == 0:
             return layers[-2::-1]   # Exclude empty final layer and reverse
 
     def get_descendant_layers(self, level=0, layers=None):
-        def add_edge(edges, id, father, mother):
-            lefts = [p[0] for p in edges.values()]
-            rights = [p[1] for p in edges.values()]
-            if ((father in lefts and father in rights) or
-                    (mother in rights and mother in lefts)):
-                return False
-            if father in lefts or mother in rights:
-                edges[id] = (mother, father)
-                return True
-            edges[id] = (father, mother)
-            return True
-
         if layers is None:
             layers = [{
+                'people': [],
                 'groups': defaultdict(list),
                 'edges': {}
             }]
+            layers[0]['people'].append(self)
             layers[0]['groups'][self.parents_id].append(self)
             level = 1
             outer_layer = True
@@ -505,18 +529,19 @@ class Person:
         if self.children:
             if level >= len(layers):
                 layers.append({
+                        'people': [],
                         'groups': defaultdict(list),
                         'edges': {}
                     })
             prev_layer = layers[level-1]
             for child in [c for c in self.children
                           if c not in layers[level]['groups'][c.parents_id]]:
+                layers[level]['people'].append(child)
                 layers[level]['groups'][child.parents_id].append(child)
                 for parent in child.parents:
                     if parent not in chain(*prev_layer['groups'].values()):
-                        prev_layer['groups'][None].append(parent)
-                        add_edge(prev_layer['edges'], child.parents_id,
-                                 child.father, child.mother)
+                        self._add_edge(prev_layer, child.parents_id,
+                                       child.father, child.mother)
                 child.get_descendant_layers(level=level+1, layers=layers)
         if outer_layer:
             return layers
@@ -938,7 +963,7 @@ class Relationship:
 
         if noun:
             return self.end_type
-        
+
         match self.end_type:
             case 'marriage':
                 return 'married'
@@ -1081,7 +1106,8 @@ class Database:
                   WHERE father_id = %s
                      OR mother_id = %s
                   ORDER BY spurious ASC,
-                           date_of_birth ASC;"""
+                           date_of_birth ASC,
+                           person_id ASC;"""
         return self.get_all_records(sql, (id, id))
 
     def get_child_ids(self, id):
@@ -1090,7 +1116,8 @@ class Database:
                    FROM people
                   WHERE %s IN (father_id, mother_id)
                   ORDER BY spurious ASC,
-                           date_of_birth ASC;"""
+                           date_of_birth ASC,
+                           person_id ASC;"""
         if not (records := self.get_all_records(sql, id)):
             return tuple()
         return tuple(x['person_id'] for x in records)
@@ -1101,15 +1128,17 @@ class Database:
                          person_id AS child_id
                     FROM people
                    WHERE father_id IS NOT NULL
-                   ORDER BY father_id,
-                            person_id)
+                   ORDER BY father_id ASC,
+                            date_of_birth ASC,
+                            person_id ASC)
                  UNION ALL
                  (SELECT mother_id AS parent_id,
                          person_id AS child_id
                     FROM people
                    WHERE mother_id IS NOT NULL
-                   ORDER BY mother_id,
-                            person_id);"""
+                   ORDER BY mother_id ASC,
+                            date_of_birth ASC,
+                            person_id ASC);"""
         records = self.get_all_records(sql)
         output = defaultdict(list)
         for record in records:
@@ -1128,7 +1157,8 @@ class Database:
                          OR people.mother_id = person.mother_id)
                     AND people.person_id <> person.person_id
                   ORDER BY spurious ASC,
-                           date_of_birth ASC;"""
+                           date_of_birth ASC,
+                           person_id ASC;"""
         return self.get_all_records(sql, id)
 
     def get_full_siblings(self, id):
@@ -1145,7 +1175,8 @@ class Database:
                     AND (person.father_id IS NOT NULL
                          OR person.mother_id IS NOT NULL)
                   ORDER BY spurious ASC,
-                           date_of_birth ASC;"""
+                           date_of_birth ASC,
+                           person_id ASC;"""
         return self.get_all_records(sql, id)
 
     def get_half_siblings(self, id):
@@ -1162,7 +1193,8 @@ class Database:
                          AND COALESCE(people.father_id, -1) <> COALESCE(person.father_id, -1))
                     AND people.person_id <> person.person_id
                   ORDER BY spurious ASC,
-                           date_of_birth ASC;"""
+                           date_of_birth ASC,
+                           person_id ASC;"""
         return self.get_all_records(sql, id)
 
     def get_line(self, id):
@@ -1271,6 +1303,5 @@ class Database:
         return self.get_all_records(sql)
 
 if __name__ == '__main__':
-    family = Family()
-    family.add_all()
+    family = Family(True)
     print('\n'.join([f'{k}: {v}' for k, v in sorted(family.people.items())]))
