@@ -36,6 +36,8 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'password_page'
 
+tree_dir = os.path.join('static', 'trees')
+
 @login_manager.user_loader
 def user_loader(_):
     return User()
@@ -64,26 +66,34 @@ def person_page(id):
 
 @app.route('/tree/<int:id>')
 @login_required
-def person_tree(id):
+def person_tree(id, calculate_kinship=False):
     try:
         path = os.path.join('static', 'trees', f'{id}.svg')
         if not os.path.isfile(path):
             import draw_tree
             family = Family(True)
             subject = family.person(id)
-            draw_tree.Tree(subject)
+            draw_tree.Tree(subject, calculate_kinship=calculate_kinship,
+                           app=app)
         return redirect(url_for('static', filename=f'trees/{id}.svg'))
     except IndexError:
         return person_not_found()
     except SpuriousConnection:
         return person_not_found()
 
+@app.route('/kinship_tree/<int:id>')
+@login_required
+def kinship_tree(id):
+    path = os.path.join(tree_dir, f'{id}.svg')
+    if os.path.isfile(path):
+        os.unlink(path)
+    return person_tree(id, calculate_kinship=True)
+
 @app.route('/clear_tree_cache')
 @login_required
 def clear_tree_cache():
-    directory = os.path.join('static', 'trees')
-    for filename in os.listdir(directory):
-        path = os.path.join(directory, filename)
+    for filename in os.listdir(tree_dir):
+        path = os.path.join(tree_dir, filename)
         if os.path.isfile(path):
             os.unlink(path)
     return home()
