@@ -2,8 +2,13 @@ from graphviz import Digraph
 
 from family_tree import Family, Person
 
-def url_for(page, id):
-    return str(id)
+web_app = None
+
+def person_url(id):
+    if web_app:
+        return web_app.url_for('person_page', id=id)
+    else:
+        return f'/{id}'
 
 class TreeGraph(Digraph):
     MARRIED_EDGE = {}
@@ -17,7 +22,7 @@ class TreeGraph(Digraph):
             label = label or person.name
             attributes = attributes | {
                     'fillcolor': self.node_fill(person.gender),
-                    'URL': url_for('person_page', id=person.id)
+                    'URL': person_url(person.id)
                 }
             if kinship_subject:
                 attributes = attributes | {
@@ -52,7 +57,7 @@ class TreeGraph(Digraph):
                 return 'gray'
 
 class Tree:
-    def __init__(self, subject, calculate_kinship=False):
+    def __init__(self, subject, calculate_kinship=False, app=None):
         self.graph = TreeGraph('dot',
                                format='svg',
                                filename=f'static/trees/{subject.id}',
@@ -61,6 +66,7 @@ class Tree:
                                            'tooltip': ' '},
                                node_attr={'shape': 'box',
                                           'style': 'filled',
+                                          'target': '_top',
                                           'tooltip': ' '},
                                edge_attr={'dir': 'none',
                                           'tooltip': ' '})
@@ -72,6 +78,10 @@ class Tree:
             self.kinship_subject = subject
         else:
             self.kinship_subject = None
+
+        if app:
+            global web_app
+            web_app = app
 
         self.layers = subject.get_layers()
         for layer_number in range(len(self.layers)):
