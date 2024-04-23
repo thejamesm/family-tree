@@ -21,7 +21,7 @@ class TreeGraph(Digraph):
             id = person.id
             label = label or person.name
             attributes = attributes | {
-                    'fillcolor': self.node_fill(person.gender),
+                    'class': person.gender,
                     'URL': person_url(person.id)
                 }
             if kinship_subject:
@@ -75,6 +75,7 @@ class Tree:
                                graph_attr={'splines': 'ortho',
                                            'concentrate': 'true',
                                            'stylesheet': css,
+                                           'bgcolor': 'transparent',
                                            'tooltip': ' '},
                                node_attr={'shape': 'box',
                                           'style': 'filled',

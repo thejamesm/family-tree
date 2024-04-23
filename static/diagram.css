@@ -1,8 +1,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Merriweather&display=swap');
 
+svg {
+    background-color: #fdfdea;
+}
+
 text {
     font-family: "Merriweather";
     font-size: 9pt;
+}
+
+.male polygon {
+    fill: #d3b532;
+}
+
+.female polygon {
+    fill: #56d34b;
 }
 
 #subject {
