@@ -132,8 +132,3 @@ iframe {
     height: 80vh;
     border: 0.1em solid #333;
 }
-
-iframe svg #subject {
-    font-weight: bold;
-    stroke-width: 0.1em;
-}

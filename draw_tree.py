@@ -62,16 +62,24 @@ class TreeGraph(Digraph):
 
 class Tree:
     def __init__(self, subject, calculate_kinship=False, app=None):
+        if app:
+            global web_app
+            web_app = app
+            css = web_app.url_for('static', filename='diagram.css')
+        else:
+            css = ''
+
         self.graph = TreeGraph('dot',
                                format='svg',
                                filename=f'static/trees/{subject.id}',
                                graph_attr={'splines': 'ortho',
                                            'concentrate': 'true',
+                                           'stylesheet': css,
                                            'tooltip': ' '},
                                node_attr={'shape': 'box',
                                           'style': 'filled',
                                           'fontname': 'Merriweather',
-                                          'fontsize': '14.0',
+                                          'fontsize': '13.0',
                                           'target': '_top',
                                           'tooltip': ' '},
                                edge_attr={'dir': 'none',
@@ -84,10 +92,6 @@ class Tree:
             self.kinship_subject = subject
         else:
             self.kinship_subject = None
-
-        if app:
-            global web_app
-            web_app = app
 
         self.layers = subject.get_layers()
         for layer_number in range(len(self.layers)):
