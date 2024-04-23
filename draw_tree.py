@@ -67,7 +67,7 @@ class Tree:
             web_app = app
             css = web_app.url_for('static', filename='diagram.css')
         else:
-            css = ''
+            css = '/static/diagram.css'
 
         self.graph = TreeGraph('dot',
                                format='svg',
