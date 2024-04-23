@@ -15,7 +15,7 @@ class TreeGraph(Digraph):
     UNMARRIED_EDGE = {'style': 'dashed'}
 
     def node(self, id, label='', attributes={}, invis=False,
-             kinship_subject=None, **kwargs):
+             kinship_subject=None, is_subject=False, **kwargs):
         if type(id) is Person:
             person = id
             id = person.id
@@ -27,6 +27,10 @@ class TreeGraph(Digraph):
             if kinship_subject:
                 attributes = attributes | {
                         'tooltip': kinship_subject.kinship_term(person)
+                    }
+            if is_subject:
+                attributes = attributes | {
+                        'id': 'subject'
                     }
         if invis:
             attributes = attributes | {'shape': 'point',
@@ -66,6 +70,8 @@ class Tree:
                                            'tooltip': ' '},
                                node_attr={'shape': 'box',
                                           'style': 'filled',
+                                          'fontname': 'Merriweather',
+                                          'fontsize': '14.0',
                                           'target': '_top',
                                           'tooltip': ' '},
                                edge_attr={'dir': 'none',
@@ -125,7 +131,7 @@ class Tree:
             self.people_layer = []
             person_subgraph.attr(rank='same')
             for person in layer['people']:
-                person_subgraph.node(person,
+                person_subgraph.node(person, is_subject=(person==self.subject),
                                      kinship_subject=self.kinship_subject)
                 self.people_layer.append(person.id)
             for couple_id, (left, right) in layer['edges'].items():
