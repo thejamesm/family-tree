@@ -1,3 +1,5 @@
+from math import ceil
+
 from graphviz import Digraph
 
 from family_tree import Family, Person
@@ -111,22 +113,46 @@ class Tree:
                         self.graph.edge(parents_id, people[0].id, weight=10000)
                     else:
                         head_nodes = []
+                        head_edges = []
                         for person in people[1:-1]:
                             node_id = f'n{person.id}'
-                            line_subgraph.node(node_id, invis=True)
                             self.graph.edge(node_id, person.id, weight=10000)
                             head_nodes.append(node_id)
+                            head_edges.append((node_id, person.id))
                         n_nodes = len(head_nodes)
                         if n_nodes % 2 == 0:
                             node_id = f'b{parents_id}'
                             head_nodes.insert(n_nodes // 2, node_id)
-                            line_subgraph.node(node_id, invis=True)
-                        self.graph.edge(parents_id, head_nodes[n_nodes // 2],
-                                           weight=10000)
-                        for prev_id, cur in zip(head_nodes, head_nodes[1:]):
-                            self.graph.edge(prev_id, cur, weight=10)
+                            head_edges.insert(n_nodes // 2,
+                                              (parents_id, node_id))
+                            n_nodes += 1
+                        else:
+                            middle_node = head_nodes[n_nodes // 2]
+                            head_edges.insert(n_nodes // 2,
+                                              (parents_id, middle_node))
+                        if n_nodes > 1:
+                            mid = n_nodes / 2
+                            parents = (self.layers[layer_number-1]['edges']
+                                                  [parents_id])
+                            left = parents[0].id
+                            right = parents[1].id
+                            head_nodes.insert(int(mid), f'm{left}')
+                            head_nodes.insert(ceil(mid+1), f'm{right}')
+                            for n in range(n_nodes):
+                                if n < mid:
+                                    self.graph.edge(left, head_nodes[n],
+                                                    invis=True)
+                                if n > mid:
+                                    self.graph.edge(right, head_nodes[n],
+                                                    invis=True)
                         self.graph.edge(head_nodes[0], people[0].id, weight=5)
                         self.graph.edge(head_nodes[-1], people[-1].id, weight=5)
+                        for node_id in head_nodes:
+                            line_subgraph.node(node_id, invis=True)
+                        for edge in head_edges:
+                            self.graph.edge(*edge, weight=10000)
+                        for prev_id, cur in zip(head_nodes, head_nodes[1:]):
+                            self.graph.edge(prev_id, cur, weight=100)
 
         with self.graph.subgraph(name=f'p{layer_number}') as person_subgraph:
             self.people_layer = []
