@@ -34,7 +34,6 @@ class TreeGraph(Digraph):
                     }
         if invis:
             attributes = attributes | {'shape': 'point',
-                                       'peripheries': '0',
                                        'height': '0',
                                        'width': '0'}
         id = str(id)
