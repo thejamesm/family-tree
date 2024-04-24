@@ -51,15 +51,6 @@ class TreeGraph(Digraph):
         attributes = {k: str(v) for k, v in attributes.items()}
         Digraph.edge(self, node_a, node_b, _attributes=attributes, **kwargs)
 
-    def node_fill(self, gender):
-        match gender:
-            case 'male':
-                return 'lightblue'
-            case 'female':
-                return 'lightpink'
-            case _:
-                return 'gray'
-
 class Tree:
     def __init__(self, subject, calculate_kinship=False, app=None):
         if app:
