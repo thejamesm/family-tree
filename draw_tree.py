@@ -12,7 +12,7 @@ def person_url(id):
 
 class TreeGraph(Digraph):
     MARRIED_EDGE = {}
-    UNMARRIED_EDGE = {'style': 'dashed'}
+    UNMARRIED_EDGE = {}
 
     def node(self, id, label='', attributes={}, invis=False,
              kinship_subject=None, is_subject=False, **kwargs):
