@@ -96,6 +96,14 @@ class Tree:
         if layer_number > 0:
             with self.graph.subgraph(name=f'h{layer_number}') as line_subgraph:
                 line_subgraph.attr(rank='same')
+
+                prev_p_anc_id = f'ap{layer_number-1}'
+                h_anc_id = f'ah{layer_number}'
+                cur_p_anc_id = f'ap{layer_number}'
+                self.graph.edge(prev_p_anc_id, h_anc_id, invis=True)
+                line_subgraph.node(h_anc_id, invis=True)
+                self.graph.edge(h_anc_id, cur_p_anc_id, invis=True)
+
                 for parents_id, group in [g for g in layer['groups'].items()
                                           if g[0]]:
                     people = list(group)
@@ -117,14 +125,15 @@ class Tree:
                                            weight=10000)
                         for prev_id, cur in zip(head_nodes, head_nodes[1:]):
                             self.graph.edge(prev_id, cur, weight=10)
-                        self.graph.edge(self.people_layer[0], head_nodes[0],
-                                        invis=True)
                         self.graph.edge(head_nodes[0], people[0].id, weight=5)
                         self.graph.edge(head_nodes[-1], people[-1].id, weight=5)
 
         with self.graph.subgraph(name=f'p{layer_number}') as person_subgraph:
             self.people_layer = []
             person_subgraph.attr(rank='same')
+
+            person_subgraph.node(f'ap{layer_number}', invis=True)
+
             for person in layer['people']:
                 person_subgraph.node(person, is_subject=(person==self.subject),
                                      kinship_subject=self.kinship_subject)
