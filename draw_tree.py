@@ -122,9 +122,16 @@ class Tree:
                         n_nodes = len(head_nodes)
                         if n_nodes % 2 == 0:
                             node_id = f'b{parents_id}'
-                            head_nodes.insert(n_nodes // 2, node_id)
-                            head_edges.insert(n_nodes // 2,
-                                              (parents_id, node_id))
+                            midpoint = n_nodes // 2
+                            person_id = people[midpoint].id
+                            person = [p for p in layer['people']
+                                      if p.id == person_id][0]
+                            head_nodes.insert(midpoint, node_id)
+                            head_edges.insert(midpoint,
+                                              (node_id, f'i{person.id}',
+                                               {'style': 'invis'}))
+                            head_edges.insert(midpoint, (parents_id, node_id))
+                            person.invis_neighbour = True
                             n_nodes += 1
                         else:
                             middle_node = head_nodes[n_nodes // 2]
@@ -164,6 +171,10 @@ class Tree:
                 person_subgraph.node(person, is_subject=(person==self.subject),
                                      kinship_subject=self.kinship_subject)
                 self.people_layer.append(person.id)
+                if hasattr(person, 'invis_neighbour'):
+                    invis_id = f'i{person.id}'
+                    person_subgraph.node(invis_id, invis=True)
+                    self.people_layer.append(invis_id)
             for couple_id, (left, right) in layer['edges'].items():
                 if ((relationship := self.family.get_relationship(left, right))
                         and relationship.type == 'marriage'):
