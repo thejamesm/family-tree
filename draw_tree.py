@@ -142,7 +142,7 @@ class Tree:
                                 if n < mid:
                                     self.graph.edge(left, head_nodes[n],
                                                     invis=True)
-                                if n > mid:
+                                if n > mid+1:
                                     self.graph.edge(right, head_nodes[n],
                                                     invis=True)
                         self.graph.edge(head_nodes[0], people[0].id, weight=5)
