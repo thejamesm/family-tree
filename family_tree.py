@@ -756,7 +756,7 @@ class Person:
         if not term:
             term = calc_extended_term(short, diff, person.gender)
 
-        return prefix + term + suffix
+        return (prefix + term + suffix).replace('self’s ', '')
 
 class PersonEncoder(json.JSONEncoder):
     def default(self, obj):
