@@ -1,6 +1,7 @@
 {% from 'macros.html' import relationship_description -%}
 {% extends 'base.html' %}
 {% if person.spurious %}{% set spurious_class = ' class="spurious"' | safe %}{% endif %}
+{% block script %}<script src="{{ url_for('static', filename='diagram.js') }}"></script>{% endblock %}
 {% block title %}{{ person.name }}{% endblock %}
 {% block content %}
         <section class="person">
