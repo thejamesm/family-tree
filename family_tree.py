@@ -794,28 +794,28 @@ class PersonEncoder(json.JSONEncoder):
         return super().default(obj)
 
 class Relationship:
-    def __init__(self, person_a=None, person_b=None, family=None, record=None,
+    def __init__(self, subject=None, partner=None, family=None, record=None,
                  blank_record=False):
-        if not ((person_a and person_b) or record):
+        if not ((subject and partner) or record):
             raise ValueError('Insufficient data to describe relationship.')
-        if not (person_a and person_b):
+        if not (subject and partner):
             if family:
-                person_a = family.people[record['person_a_id']]
-                person_b = family.people[record['person_b_id']]
+                subject = family.people[record['person_a_id']]
+                partner = family.people[record['person_b_id']]
             else:
-                person_a = Person(record['person_a_id'])
-                person_b = Person(record['person_b_id'])
+                subject = Person(record['person_a_id'])
+                partner = Person(record['person_b_id'])
         else:
-            if type(person_a) is int:
+            if type(subject) is int:
                 if family:
-                    person_a = family.people[person_a]
+                    subject = family.people[subject]
                 else:
-                    person_a = Person(person_a)
-            if type(person_b) is int:
+                    subject = Person(subject)
+            if type(partner) is int:
                 if family:
-                    person_b = family.people[person_b]
+                    partner = family.people[partner]
                 else:
-                    person_b = Person(person_b)
+                    partner = Person(partner)
         if blank_record:
             record = {
                     'relationship_id': str(uuid4()),
@@ -829,13 +829,13 @@ class Relationship:
                 }
         elif not record:
             if family:
-                record = family.db.get_relationship(person_a, person_b)
+                record = family.db.get_relationship(subject, partner)
             else:
-                record = Database().get_relationship(person_a, person_b)
+                record = Database().get_relationship(subject, partner)
         self.id = record['relationship_id']
         self.type = record['relationship_type']
-        self.people = (person_a, person_b)
-        self.partner = person_b
+        self.people = (subject, partner)
+        self.partner = partner
 
         start_date = record['start_date']
         start_prec = record['start_date_precision']
