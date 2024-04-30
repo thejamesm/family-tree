@@ -538,15 +538,30 @@ class Person:
         if level == 0:
             return layers[-2::-1]   # Exclude empty final layer and reverse
 
-    def get_descendant_layers(self, level=0, layers=None):
+    def get_descendant_layers(self, level=0, layers=None,
+                              include_partners=False, include_siblings=False):
         if layers is None:
             layers = [{
                 'people': [],
                 'groups': defaultdict(list),
                 'edges': {}
             }]
-            layers[0]['people'].append(self)
-            layers[0]['groups'][self.parents_id].append(self)
+            if include_siblings:
+                people = self.siblings_and_self
+            else:
+                people = [self]
+            for person in people:
+                layers[0]['people'].append(person)
+                layers[0]['groups'][person.parents_id].append(person)
+                if include_partners:
+                    for relationship in person.relationships:
+                        person_a = person
+                        person_b = relationship.partner
+                        if (person_a.gender == 'female' and
+                                person_b.gender == 'male'):
+                            person_a, person_b = person_b, person_a
+                        Person._add_edge(layers[0], f'r{relationship.id}',
+                                         person_a, person_b)
             level = 1
             outer_layer = True
         else:
@@ -571,8 +586,10 @@ class Person:
         if outer_layer:
             return layers
 
-    def get_layers(self):
-        return (self.get_ancestor_layers() + self.get_descendant_layers())
+    def get_layers(self, include_partners=False, include_siblings=False):
+        return (self.get_ancestor_layers() +
+                self.get_descendant_layers(include_partners=include_partners,
+                                           include_siblings=include_siblings))
 
     def kinship_term(self, person):
 
