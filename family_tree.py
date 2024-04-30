@@ -163,6 +163,38 @@ class Person:
                 people[index] = person.id
         return tuple(sorted(people))
 
+    @classmethod
+    def _add_edge(cls, layer, id, father, mother):
+        edges = layer['edges']
+        people = layer['people']
+        lefts = [p[0] for p in edges.values()]
+        rights = [p[1] for p in edges.values()]
+        if ((father, mother) in edges.values() or
+                (mother, father) in edges.values()):
+            return True
+        if ((father in lefts and father in rights) or
+                (mother in rights and mother in lefts)):
+            return False
+        if father in lefts:
+            prev_index = list(edges.keys())[lefts.index(father)]
+            prev_mother = edges[prev_index][1]
+            edges[prev_index] = (prev_mother, father)
+            f_index = people.index(father)
+            m_index = people.index(prev_mother)
+            people[f_index], people[m_index] = people[m_index], people[f_index]
+        if mother in rights:
+            left = mother
+            right = father
+        else:
+            left = father
+            right = mother
+        if (right in people and left not in people):
+            people.insert(people.index(right), left)
+        if (left in people and right not in people):
+            people.insert(people.index(left)+1, right)
+        edges[id] = (left, right)
+        return True
+
     _pattern_parts = (('%#d', '%B', '%Y') if os.name == 'nt'
                       else ('%-d', '%B', '%Y'))
 
@@ -475,37 +507,6 @@ class Person:
         return (self.get_longest_ancestor_line() +
                 self.get_longest_descendant_line()[1:])
 
-    def _add_edge(self, layer, id, father, mother):
-        edges = layer['edges']
-        people = layer['people']
-        lefts = [p[0] for p in edges.values()]
-        rights = [p[1] for p in edges.values()]
-        if ((father, mother) in edges.values() or
-                (mother, father) in edges.values()):
-            return True
-        if ((father in lefts and father in rights) or
-                (mother in rights and mother in lefts)):
-            return False
-        if father in lefts:
-            prev_index = list(edges.keys())[lefts.index(father)]
-            prev_mother = edges[prev_index][1]
-            edges[prev_index] = (prev_mother, father)
-            f_index = people.index(father)
-            m_index = people.index(prev_mother)
-            people[f_index], people[m_index] = people[m_index], people[f_index]
-        if mother in rights:
-            left = mother
-            right = father
-        else:
-            left = father
-            right = mother
-        if (right in people and left not in people):
-            people.insert(people.index(right), left)
-        if (left in people and right not in people):
-            people.insert(people.index(left)+1, right)
-        edges[id] = (left, right)
-        return True
-
     def get_ancestor_layers(self, level=0, layers=None):
         if layers is None:
             layers = []
@@ -527,8 +528,8 @@ class Person:
                 layers[level]['people'].append(parent)
                 layers[level]['groups'][parent.parents_id].append(parent)
         if all(parents):
-            self._add_edge(layers[level], self.parents_id,
-                           self.father, self.mother)
+            Person._add_edge(layers[level], self.parents_id,
+                             self.father, self.mother)
         if level == 0:
             return layers[-2::-1]   # Exclude empty final layer and reverse
 
@@ -559,8 +560,8 @@ class Person:
                 layers[level]['groups'][child.parents_id].append(child)
                 for parent in child.parents:
                     if parent not in chain(*prev_layer['groups'].values()):
-                        self._add_edge(prev_layer, child.parents_id,
-                                       child.father, child.mother)
+                        Person._add_edge(prev_layer, child.parents_id,
+                                         child.father, child.mother)
                 child.get_descendant_layers(level=level+1, layers=layers)
         if outer_layer:
             return layers
