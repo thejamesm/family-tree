@@ -126,12 +126,18 @@ class Tree:
                             person_id = people[midpoint].id
                             person = [p for p in layer['people']
                                       if p.id == person_id][0]
+                            rel_ids = [id for (id, r) in layer['edges'].items()
+                                       if r[0] == person]
+                            if rel_ids:
+                                invis_id = rel_ids[0]
+                            else:
+                                invis_id = f'i{person.id}'
+                                person.invis_neighbour = True
                             head_nodes.insert(midpoint, node_id)
                             head_edges.insert(midpoint,
-                                              (node_id, f'i{person.id}',
+                                              (node_id, invis_id,
                                                {'style': 'invis'}))
                             head_edges.insert(midpoint, (parents_id, node_id))
-                            person.invis_neighbour = True
                             n_nodes += 1
                         else:
                             middle_node = head_nodes[n_nodes // 2]
