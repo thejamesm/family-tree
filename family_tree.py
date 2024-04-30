@@ -63,6 +63,10 @@ class Family:
             return []
 
     def get_relationship(self, person_a, person_b):
+        if type(person_a) is Person:
+            person_a = person_a.id
+        if type(person_b) is Person:
+            person_b = person_b.id
         try:
             return self.relationships[(person_a, person_b)]
         except KeyError:
@@ -81,7 +85,8 @@ class Family:
     @lru_cache(maxsize=128)
     def get_parents_id(self, father, mother):
         if father and mother:
-            if relationship := self.get_relationship(father, mother):
+            if ((relationship := self.get_relationship(father, mother)) or
+                    (relationship := self.get_relationship(mother, father))):
                 return f'r{relationship.id}'
             else:
                 return f'{father.id}_{mother.id}'
