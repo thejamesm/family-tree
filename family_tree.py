@@ -382,6 +382,12 @@ class Person:
         return [Person(record=record, family=family) for record in records]
 
     @cached_property
+    def siblings_and_self(self):
+        siblings = self.siblings
+        siblings.append(self)
+        return sorted(siblings)
+
+    @cached_property
     def relationships(self):
         if not (family := self.family):
             family = Family()
