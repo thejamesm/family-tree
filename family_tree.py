@@ -207,6 +207,7 @@ class Person:
             if self.dod_prec > 0:
                 self.year_of_death = self.dod.year
             else:
+                self.dod_unknown = True
                 self.year_of_death = '?'
         elif self.dod_unknown:
             self.dod = None
