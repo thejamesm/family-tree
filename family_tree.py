@@ -236,6 +236,11 @@ class Person:
             years = ''
         return self.name + years
 
+    def __lt__(self, other):
+        self_dob = self.dob or date.max
+        other_dob = other.dob or date.max
+        return self_dob < other_dob
+
     @cached_property
     def dates(self):
         if self.date_of_birth and self.date_of_death:
@@ -351,7 +356,7 @@ class Person:
                             for child_id in child_ids]
             else:
                 children = [Person(child_id) for child_id in child_ids]
-            return sorted(children, key=lambda child: child.dob or date.max)
+            return sorted(children)
         except KeyError:
             return []
 
@@ -935,7 +940,7 @@ class Relationship:
                         for child_id in child_ids]
         else:
             children = [Person(child_id) for child_id in child_ids]
-        return sorted(children, key=lambda child: child.dob or date.max)
+        return sorted(children)
 
     def end_type_description(self, noun=True, until=False):
         def death_description():
