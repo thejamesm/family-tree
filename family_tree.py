@@ -186,7 +186,10 @@ class Person:
             self.dob = date.fromisoformat(_dob)
             dob_pattern = ' '.join(Person._pattern_parts[3 - self.dob_prec:])
             self.date_of_birth = date.strftime(self.dob, dob_pattern)
-            self.year_of_birth = self.dob.year
+            if self.dob_prec > 0:
+                self.year_of_birth = self.dob.year
+            else:
+                self.year_of_birth = None
         else:
             self.dob = None
             self.date_of_birth = None
@@ -201,7 +204,10 @@ class Person:
             self.dod = date.fromisoformat(_dod)
             dod_pattern = ' '.join(Person._pattern_parts[3 - self.dod_prec:])
             self.date_of_death = date.strftime(self.dod, dod_pattern)
-            self.year_of_death = self.dod.year
+            if self.dod_prec > 0:
+                self.year_of_death = self.dod.year
+            else:
+                self.year_of_death = '?'
         elif self.dod_unknown:
             self.dod = None
             self.date_of_death = None
@@ -276,6 +282,8 @@ class Person:
         else:
             end = date.today()
             end_prec = 3
+        if min(start_prec, end_prec) < 1:
+            return None
         age = end.year - start.year
         if min(start_prec, end_prec) == 1:
             return f'approx. {age}'
