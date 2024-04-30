@@ -63,7 +63,6 @@ class Family:
             return []
 
     def get_relationship(self, person_a, person_b):
-        person_a, person_b = Person.sorted_ids(person_a, person_b)
         try:
             return self.relationships[(person_a, person_b)]
         except KeyError:
