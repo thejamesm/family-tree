@@ -1103,11 +1103,13 @@ class Database:
             sql = f"""SELECT *
                         FROM people
                        WHERE METAPHONE(person_name, {self.MPHONE_LEN})
-                             {self.and_condition}
                         LIKE '%%' || METAPHONE(%s, {self.MPHONE_LEN}) || '%%'
+                             {self.and_condition}
                        ORDER BY spurious ASC,
                                 SIMILARITY(%s, person_name) DESC;"""
             results = self.get_all_records(sql, (match, match))
+        if not results:
+            return []
         return results
 
     def get_person(self, match):
