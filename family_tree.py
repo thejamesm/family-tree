@@ -761,46 +761,62 @@ class Person:
             _, short, diff = kinship
             term = calc_term(short, diff, person.gender)
         else:
-            for partner in [r.partner for r in self.relationships
-                            if r.type == 'marriage']:
+            for relationship in self.relationships:
+                partner = relationship.partner
                 kinship = family.kinship(partner, person)
                 if kinship:
                     _, short, diff = kinship
-                    term = calc_spousal_term(short, diff, person.gender)
+                    if relationship.type == 'marriage':
+                        term = calc_spousal_term(short, diff, person.gender)
+                    else:
+                        term = None
                     if not term:
                         term = calc_term(short, diff, person.gender)
-                        match partner.gender:
-                            case 'male':
-                                prefix = 'husband’s '
-                            case 'female':
-                                prefix = 'wife’s '
-                            case _:
-                                prefix = 'spouse’s '
+                        if relationship.type == 'marriage':
+                            match partner.gender:
+                                case 'male':
+                                    prefix = 'husband’s '
+                                case 'female':
+                                    prefix = 'wife’s '
+                                case _:
+                                    prefix = 'spouse’s '
+                        else:
+                            prefix = 'partner’s '
                     break
             if not kinship:
-                for partner in [r.partner for r in person.relationships
-                                if r.type == 'marriage']:
+                for relationship in person.relationships:
+                    partner = relationship.partner
                     kinship = family.kinship(self, partner)
                     if kinship:
                         _, short, diff = kinship
-                        term = calc_affine_term(short, diff, person.gender)
+                        if relationship.type == 'marriage':
+                            term = calc_affine_term(short, diff, person.gender)
+                        else:
+                            term = None
                         if not term:
                             term = calc_term(short, diff, partner.gender)
-                            match person.gender:
-                                case 'male':
-                                    suffix = '’s husband'
-                                case 'female':
-                                    suffix = '’s wife'
-                                case _:
-                                    suffix = '’s spouse'
-                        break
+                            if relationship.type == 'marriage':
+                                match person.gender:
+                                    case 'male':
+                                        suffix = '’s husband'
+                                    case 'female':
+                                        suffix = '’s wife'
+                                    case _:
+                                        suffix = '’s spouse'
+                            else:
+                                suffix = '’s partner'
+                            break
+                            
             if not kinship:
                 return 'no blood relation'
 
         if not term:
             term = calc_extended_term(short, diff, person.gender)
 
-        return (prefix + term + suffix).replace('self’s ', '')
+        output = prefix + term + suffix
+        output = output.replace('self’s ', '')
+        output = output.replace('’s self', '')
+        return output
 
 class PersonEncoder(json.JSONEncoder):
     def default(self, obj):
