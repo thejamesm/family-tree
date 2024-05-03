@@ -565,24 +565,26 @@ class Person:
             level = 1
             outer_layer = True
         else:
+            people = [self]
             outer_layer = False
-        if self.children:
-            if level >= len(layers):
-                layers.append({
-                        'people': [],
-                        'groups': defaultdict(list),
-                        'edges': {}
-                    })
-            prev_layer = layers[level-1]
-            for child in [c for c in self.children
-                          if c not in layers[level]['groups'][c.parents_id]]:
-                layers[level]['people'].append(child)
-                layers[level]['groups'][child.parents_id].append(child)
-                for parent in child.parents:
-                    if parent not in chain(*prev_layer['groups'].values()):
-                        Person._add_edge(prev_layer, child.parents_id,
-                                         child.father, child.mother)
-                child.get_descendant_layers(level=level+1, layers=layers)
+        for person in people:
+            if person.children:
+                if level >= len(layers):
+                    layers.append({
+                            'people': [],
+                            'groups': defaultdict(list),
+                            'edges': {}
+                        })
+                prev_layer = layers[level-1]
+                for child in [c for c in person.children
+                            if c not in layers[level]['groups'][c.parents_id]]:
+                    layers[level]['people'].append(child)
+                    layers[level]['groups'][child.parents_id].append(child)
+                    for parent in child.parents:
+                        if parent not in chain(*prev_layer['groups'].values()):
+                            Person._add_edge(prev_layer, child.parents_id,
+                                            child.father, child.mother)
+                    child.get_descendant_layers(level=level+1, layers=layers)
         if outer_layer:
             return layers
 
