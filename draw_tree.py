@@ -86,7 +86,8 @@ class Tree:
         else:
             self.kinship_subject = None
 
-        self.layers = subject.get_layers()
+        self.layers = subject.get_layers(include_siblings=True,
+                                         include_partners=True)
         for layer_number in range(len(self.layers)):
             self.draw_layer(layer_number)
 
