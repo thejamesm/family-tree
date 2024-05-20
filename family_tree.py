@@ -2,6 +2,7 @@ import psycopg2
 import json
 import os
 from datetime import date
+from dateutil.relativedelta import relativedelta
 from functools import cached_property, lru_cache
 from itertools import chain
 from collections import defaultdict
@@ -316,6 +317,7 @@ class Person:
     def age(self):
         if (not self.dob) or self.dod_unknown:
             return None
+        approx_prefix = ''
         start = self.dob
         start_prec = self.dob_prec
         if self.dod:
@@ -326,16 +328,26 @@ class Person:
             end_prec = 3
         if min(start_prec, end_prec) < 1:
             return None
-        age = end.year - start.year
-        if min(start_prec, end_prec) == 1:
-            return f'approx. {age}'
-        if (start.month > end.month):
-            return str(age - 1)
-        if (start.month == end.month) and (start.day > end.day):
-            if min(start_prec, end_prec) == 2:
-                return f'approx. {age - 1}'
-            return str(age - 1)
-        return str(age)
+        age_delta = relativedelta(end, start)
+        min_prec = min(start_prec, end_prec)
+        if min_prec == 1:
+            return f'approx. {age_delta.years}'
+        if (min_prec == 2) and (age_delta.months == 0):
+            approx_prefix = 'approx. '
+        if (age_delta.years < 1) and (start_prec > 1):
+            if age_delta.months > 0:
+                age = age_delta.months
+                unit = 'month'
+            elif (age_delta.weeks > 0) and (start_prec > 2):
+                age = age_delta.weeks
+                unit = 'week'
+            elif start_prec > 2:
+                age = age_delta.days
+                unit = 'day'
+            if age != 1:
+                unit += 's'
+            return f'{approx_prefix}{age} {unit}'
+        return approx_prefix + str(age_delta.years)
 
     @cached_property
     def father(self):
