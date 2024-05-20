@@ -17,7 +17,7 @@
 {%- endmacro %}
 
 {% macro relationship_description(rel) -%}
-{{ rel.partner_description.title() }} {{ person_link(rel.partner, 'b') }}
+{{ rel.partner_description.capitalize() }} {{ person_link(rel.partner, 'b') }}
 {%- if rel.dates %}, <span class="nowrap">{{ rel.dates }}</span>{% endif %}
 {%- if rel.end_type_description() %} ({{
     rel.end_type_description(noun=rel.dates, until=(not rel.dates))

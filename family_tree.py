@@ -921,13 +921,14 @@ class Relationship:
     def partner_description(self):
         match self.type, self.partner.gender:
             case 'marriage', 'male':
-                return 'husband'
+                rel_type = 'husband'
             case 'marriage', 'female':
-                return 'wife'
+                rel_type = 'wife'
             case 'marriage', _:
-                return 'spouse'
+                rel_type = 'spouse'
             case 'couple', _:
-                return 'partner'
+                rel_type = 'partner'
+        return self.ex_prefix + rel_type
 
     @cached_property
     def dates(self):
@@ -970,11 +971,12 @@ class Relationship:
         return ', '.join(filter(None, (self.end_date, self.end_type))) or None
 
     @cached_property
+    def is_ex(self):
+        return self.end_type in ('divorce', 'separation')
+
+    @cached_property
     def ex_prefix(self):
-        if self.end_type in ('divorce', 'separation'):
-            return 'ex-'
-        else:
-            return ''
+        return 'ex-' if self.is_ex else ''
 
     @cached_property
     def description(self):

@@ -13,8 +13,10 @@ def person_url(id):
         return f'/{id}'
 
 class TreeGraph(Digraph):
+    DEFAULT_EDGE = {}
     MARRIED_EDGE = {}
     UNMARRIED_EDGE = {}
+    EX_EDGE = {'style': 'dashed'}
 
     def node(self, id, label='', attributes={}, invis=False,
              kinship_subject=None, is_subject=False, **kwargs):
@@ -183,11 +185,16 @@ class Tree:
                     person_subgraph.node(invis_id, invis=True)
                     self.people_layer.append(invis_id)
             for couple_id, (left, right) in layer['edges'].items():
-                if ((relationship := self.family.get_relationship(left, right))
-                        and relationship.type == 'marriage'):
-                    join_style = TreeGraph.MARRIED_EDGE
+                if relationship := (self.family.get_relationship(left, right) or
+                                    self.family.get_relationship(right, left)):
+                    if relationship.is_ex:
+                        join_style = TreeGraph.EX_EDGE
+                    elif relationship.type == 'marriage':
+                        join_style = TreeGraph.MARRIED_EDGE
+                    else:
+                        join_style = TreeGraph.UNMARRIED_EDGE
                 else:
-                    join_style = TreeGraph.UNMARRIED_EDGE
+                    join_style = TreeGraph.DEFAULT_EDGE
                 person_subgraph.node(couple_id, invis=True)
                 self.graph.edge(left.id, couple_id, join_style, weight=1000)
                 self.graph.edge(couple_id, right.id, join_style, weight=1000)
