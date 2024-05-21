@@ -551,7 +551,8 @@ class Person:
             return layers[-2::-1]   # Exclude empty final layer and reverse
 
     def get_descendant_layers(self, level=0, layers=None,
-                              include_partners=False, include_siblings=False):
+                              include_partners=False, include_siblings=False,
+                              ancestor_layers=None):
         if layers is None:
             layers = [{
                 'people': [],
@@ -565,6 +566,18 @@ class Person:
             for person in people:
                 layers[0]['people'].append(person)
                 layers[0]['groups'][person.parents_id].append(person)
+                if len(ancestor_layers):
+                    if person.father not in ancestor_layers[-1]['people']:
+                        ancestor_layers[-1]['people'].append(person.father)
+                        ancestor_layers[-1]['groups'] \
+                            [person.father.parents_id].append(person.father)
+                    if person.mother not in ancestor_layers[-1]['people']:
+                        ancestor_layers[-1]['people'].append(person.mother)
+                        ancestor_layers[-1]['groups'] \
+                            [person.mother.parents_id].append(person.mother)
+                    if person.father and person.mother:
+                        Person._add_edge(ancestor_layers[-1], person.parents_id,
+                                        person.father, person.mother)
                 if include_partners:
                     for relationship in person.relationships:
                         person_a = person
@@ -593,7 +606,11 @@ class Person:
                     layers[level]['people'].append(child)
                     layers[level]['groups'][child.parents_id].append(child)
                     for parent in child.parents:
+                        if parent not in prev_layer['people']:
+                            prev_layer['people'].append(parent)
                         if parent not in chain(*prev_layer['groups'].values()):
+                            prev_layer['groups'][parent.parents_id] \
+                                .append(parent)
                             Person._add_edge(prev_layer, child.parents_id,
                                             child.father, child.mother)
                     child.get_descendant_layers(level=level+1, layers=layers)
@@ -601,9 +618,13 @@ class Person:
             return layers
 
     def get_layers(self, include_partners=False, include_siblings=False):
-        return (self.get_ancestor_layers() +
-                self.get_descendant_layers(include_partners=include_partners,
-                                           include_siblings=include_siblings))
+        ancestor_layers = self.get_ancestor_layers()
+        descendant_layers = self.get_descendant_layers(
+                                    include_partners=include_partners,
+                                    include_siblings=include_siblings,
+                                    ancestor_layers=ancestor_layers
+                                )
+        return ancestor_layers + descendant_layers
 
     def kinship_term(self, person):
 
