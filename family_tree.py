@@ -1412,7 +1412,7 @@ class Database:
                             for i, field in enumerate(row)}
                             for row in cur.fetchall()]
 
-                return rows
+            return rows
 
         except (psycopg2.DatabaseError, Exception) as e:
             print(e)
