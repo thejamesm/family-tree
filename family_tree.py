@@ -68,7 +68,10 @@ class Family:
     inflect_engine: inflect.engine
 
 
-    def __init__(self, add_all: bool = False) -> None:
+    def __init__(
+        self,
+        add_all: bool = False
+    ) -> None:
 
         self.people = {}
         self.child_ids = {}
@@ -80,7 +83,10 @@ class Family:
             self.add_all()
 
 
-    def person(self, person: Person | int) -> Person:
+    def person(
+        self,
+        person: Person | int
+    ) -> Person:
 
         if isinstance(person, Person):
             id = person.id
@@ -97,7 +103,9 @@ class Family:
         return self.people[id]
 
 
-    def add_all(self) -> None:
+    def add_all(
+        self
+    ) -> None:
 
         for record in self.db.get_people():
             Person(record=record, family=self)
@@ -109,20 +117,28 @@ class Family:
                               for r in self.db.get_relationships()}
 
 
-    def search(self, search_string: str) -> list[Person]:
+    def search(
+        self,
+        search_string: str
+    ) -> list[Person]:
 
         return [p for p in self.people.values()
                 if search_string.lower() in p.name.lower()]
 
 
-    def save(self) -> None:
+    def save(
+        self
+    ) -> None:
 
         with open(r'family_tree.json', mode='w', encoding='utf-8') as f:
             json.dump(list(self.people.values()), f, cls=PersonEncoder,
                       indent=4, ensure_ascii=False)
 
 
-    def get_child_ids(self, person: Person | int) -> list[int]:
+    def get_child_ids(
+        self,
+        person: Person | int
+    ) -> list[int]:
 
         if isinstance(person, Person):
             person = person.id
@@ -133,8 +149,11 @@ class Family:
             return []
 
 
-    def get_relationship(self, person_a: Person | int,
-                         person_b: Person | int) -> Relationship:
+    def get_relationship(
+        self,
+        person_a: Person | int,
+        person_b: Person | int
+    ) -> Relationship:
 
         if isinstance(person_a, Person):
             person_a = person_a.id
@@ -148,8 +167,11 @@ class Family:
             return None
 
 
-    def add_relationship(self, person_a: Person | int,
-                         person_b: Person | int) -> Relationship:
+    def add_relationship(
+        self,
+        person_a: Person | int,
+        person_b: Person | int
+    ) -> Relationship:
 
         rel = Relationship(person_a, person_b, family=self, blank_record=True)
         self.relationships[tuple(p.id for p in rel.people)] = rel
@@ -157,8 +179,11 @@ class Family:
         return rel
 
 
-    def relationship(self, person_a: Person | int,
-                     person_b: Person | int) -> Relationship:
+    def relationship(
+        self,
+        person_a: Person | int,
+        person_b: Person | int
+    ) -> Relationship:
 
         if not (relationship := self.get_relationship(person_a, person_b)):
             relationship = self.add_relationship(person_a, person_b)
@@ -167,8 +192,11 @@ class Family:
 
 
     @lru_cache(maxsize=128)
-    def get_parents_id(self, father: Person | int,
-                       mother: Person | int) -> str | None:
+    def get_parents_id(
+        self,
+        father: Person | int,
+        mother: Person | int
+    ) -> str | None:
 
         if father and mother:
             if ((relationship := self.get_relationship(father, mother)) or
@@ -184,30 +212,49 @@ class Family:
         return None
 
 
-    def get_longest_line(self) -> list[Person]:
+    def get_longest_line(
+        self
+    ) -> list[Person]:
 
         return max([p.get_longest_line() for p in self.people.values()],
                    key=len)
 
 
-    def kinship(self, person_a: Person | int,
-                person_b: Person | int) -> tuple[Person, int, int] | None:
+    def kinship(
+        self,
+        person_a: Person | int,
+        person_b: Person | int
+    ) -> tuple[Person, int, int] | None:
 
-        def search_nested(needle: Person,
-                          haystack: list[tuple[Person, ...]]) -> int | None:
+
+        def search_nested(
+            needle: Person,
+            haystack: list[tuple[Person, ...]]
+        ) -> int | None:
+
             gen = (x[0] for x in enumerate(haystack) if needle in x[1])
             return next(gen, None)
 
-        def all_parents(layer: list[tuple[Person, ...]]) -> tuple[Person, ...]:
+
+        def all_parents(
+            layer: list[tuple[Person, ...]]
+        ) -> tuple[Person, ...]:
+
             return tuple(parent for x in layer
                          for parent in (x.father, x.mother)
                          if parent is not None)
 
-        def calculate_kinship(common_ancestor: Person, a_depth: int,
-                              b_depth: int) -> tuple[Person, int, int]:
+
+        def calculate_kinship(
+            common_ancestor: Person,
+            a_depth: int,
+            b_depth: int
+        ) -> tuple[Person, int, int]:
+
             shorter_leg = min(a_depth, b_depth)
             difference = a_depth - b_depth
             return common_ancestor, shorter_leg, difference
+
 
         self.add_all()
         person_a = self.person(person_a)
@@ -278,15 +325,21 @@ class Person:
 
 
     @classmethod
-    def search(cls, search_string: str,
-               family: Family = None) -> list[Person]:
+    def search(
+        cls,
+        search_string: str,
+        family: Family = None
+    ) -> list[Person]:
 
         return [Person(record=record, family=family)
                 for record in Database().get_people(search_string)]
 
 
     @classmethod
-    def sorted_ids(cls, *people: Person) -> tuple[int, ...]:
+    def sorted_ids(
+        cls,
+        *people: Person
+    ) -> tuple[int, ...]:
 
         ids: list[int] = []
 
@@ -298,8 +351,13 @@ class Person:
 
 
     @classmethod
-    def _add_edge(cls, layer: Layer, id: int, father: Person | None,
-                  mother: Person | None) -> bool:
+    def _add_edge(
+        cls,
+        layer: Layer,
+        id: int,
+        father: Person | None,
+        mother: Person | None
+    ) -> bool:
 
         edges = layer['edges']
         people = layer['people']
@@ -346,9 +404,13 @@ class Person:
         )
 
 
-    def __init__(self, id: int | None = None, *,
-                 record: dict[str, RecordField] | None = None,
-                 family: Family | None = None) -> None:
+    def __init__(
+        self,
+        id: int | None = None,
+        *,
+        record: dict[str, RecordField] | None = None,
+        family: Family | None = None
+    ) -> None:
 
         self.family = family
 
@@ -416,7 +478,9 @@ class Person:
             family.people[self.id] = self
 
 
-    def __repr__(self) -> str:
+    def __repr__(
+        self
+    ) -> str:
 
         years = self.years
 
@@ -428,7 +492,10 @@ class Person:
         return self.name + years
 
 
-    def __lt__(self, other) -> bool:
+    def __lt__(
+        self,
+        other
+    ) -> bool:
 
         self_dob = self.dob or date.max
         other_dob = other.dob or date.max
@@ -437,7 +504,9 @@ class Person:
 
 
     @cached_property
-    def dates(self) -> str | None:
+    def dates(
+        self
+    ) -> str | None:
 
         if self.date_of_birth and self.date_of_death:
             return f'{self.date_of_birth} – {self.date_of_death}'
@@ -450,7 +519,9 @@ class Person:
 
 
     @cached_property
-    def years(self) -> str | None:
+    def years(
+        self
+    ) -> str | None:
 
         if self.year_of_birth and self.year_of_death:
             return f'{self.year_of_birth} – {self.year_of_death}'
@@ -465,21 +536,27 @@ class Person:
 
 
     @cached_property
-    def born(self) -> str:
+    def born(
+        self
+    ) -> str:
 
         return ' in '.join(filter(None,
                                   (self.date_of_birth, self.place_of_birth)))
 
 
     @cached_property
-    def died(self) -> str:
+    def died(
+        self
+    ) -> str:
 
         return ' in '.join(filter(None,
                                   (self.date_of_death, self.place_of_death)))
 
 
     @cached_property
-    def age(self) -> str | None:
+    def age(
+        self
+    ) -> str | None:
 
         if (not self.dob) or self.dod_unknown:
             return None
@@ -525,7 +602,9 @@ class Person:
 
 
     @cached_property
-    def father(self) -> Person | None:
+    def father(
+        self
+    ) -> Person | None:
 
         father_id = self._father_id
 
@@ -543,7 +622,9 @@ class Person:
 
 
     @cached_property
-    def mother(self) -> Person | None:
+    def mother(
+        self
+    ) -> Person | None:
 
         mother_id = self._mother_id
 
@@ -561,7 +642,9 @@ class Person:
 
 
     @cached_property
-    def parents(self) -> tuple[Person, ...]:
+    def parents(
+        self
+    ) -> tuple[Person, ...]:
 
         parents: list[Person] = []
 
@@ -575,7 +658,9 @@ class Person:
 
 
     @cached_property
-    def parents_id(self) -> str | None:
+    def parents_id(
+        self
+    ) -> str | None:
 
         if self.family:
             return self.family.get_parents_id(self.father, self.mother)
@@ -584,7 +669,9 @@ class Person:
 
 
     @cached_property
-    def children(self) -> list[Person]:
+    def children(
+        self
+    ) -> list[Person]:
 
         try:
             if self.family and self.family.child_ids:
@@ -605,7 +692,9 @@ class Person:
 
 
     @cached_property
-    def siblings(self) -> list[Person]:
+    def siblings(
+        self
+    ) -> list[Person]:
 
         if not (family := self.family):
             family = Family()
@@ -616,7 +705,9 @@ class Person:
 
 
     @cached_property
-    def full_siblings(self) -> list[Person]:
+    def full_siblings(
+        self
+    ) -> list[Person]:
 
         if not (family := self.family):
             family = Family()
@@ -627,7 +718,9 @@ class Person:
 
 
     @cached_property
-    def half_siblings(self) -> list[Person]:
+    def half_siblings(
+        self
+    ) -> list[Person]:
 
         if not (family := self.family):
             family = Family()
@@ -638,7 +731,9 @@ class Person:
 
 
     @cached_property
-    def siblings_and_self(self) -> list[Person]:
+    def siblings_and_self(
+        self
+    ) -> list[Person]:
 
         siblings = self.siblings
         siblings.append(self)
@@ -647,7 +742,9 @@ class Person:
 
 
     @cached_property
-    def relationships(self) -> list[Relationship]:
+    def relationships(
+        self
+    ) -> list[Relationship]:
 
         if not (family := self.family):
             family = Family()
@@ -664,7 +761,9 @@ class Person:
         return output
 
 
-    def json(self) -> PersonJSONChildNames:
+    def json(
+        self
+    ) -> PersonJSONChildNames:
 
         tree: PersonJSONChildNames = {
                 'id': self.id,
@@ -688,7 +787,9 @@ class Person:
         return tree
 
 
-    def json_flat(self) -> PersonJSONChildIds:
+    def json_flat(
+        self
+    ) -> PersonJSONChildIds:
 
         tree: PersonJSONChildIds = {
                 'id': self.id,
@@ -712,7 +813,9 @@ class Person:
         return tree
 
 
-    def get_ancestors(self) -> PersonLine:
+    def get_ancestors(
+        self
+    ) -> PersonLine:
 
         tree: PersonLine = {'person': self}
 
@@ -725,7 +828,9 @@ class Person:
         return tree
 
 
-    def get_descendants(self) -> PersonLine:
+    def get_descendants(
+        self
+    ) -> PersonLine:
 
         tree = {'person': self}
 
@@ -736,7 +841,9 @@ class Person:
         return tree
 
 
-    def get_line(self) -> PersonLine:
+    def get_line(
+        self
+    ) -> PersonLine:
 
         tree = self.get_ancestors()
 
@@ -746,7 +853,9 @@ class Person:
         return tree
 
 
-    def get_longest_ancestor_line(self) -> list[Person]:
+    def get_longest_ancestor_line(
+        self
+    ) -> list[Person]:
 
         father_line = (self.father.get_longest_ancestor_line()
                        if self.father else [])
@@ -757,21 +866,28 @@ class Person:
         return max(father_line, mother_line, key=len) + [self]
 
 
-    def get_longest_descendant_line(self) -> list[Person]:
+    def get_longest_descendant_line(
+        self
+    ) -> list[Person]:
 
         return [self] + max([child.get_longest_descendant_line()
                              for child in self.children],
                             default=[], key=len)
 
 
-    def get_longest_line(self) -> list[Person]:
+    def get_longest_line(
+        self
+    ) -> list[Person]:
 
         return (self.get_longest_ancestor_line() +
                 self.get_longest_descendant_line()[1:])
 
 
-    def get_ancestor_layers(self, level: int = 0,
-            layers: list[Layer] | None = None) -> list[Layer]:
+    def get_ancestor_layers(
+        self,
+        level: int = 0,
+        layers: list[Layer] | None = None
+    ) -> list[Layer]:
 
         if layers is None:
             layers = []
@@ -806,10 +922,14 @@ class Person:
             return layers[-2::-1]   # Exclude empty final layer and reverse
 
 
-    def get_descendant_layers(self, level: int = 0,
-            layers: list[Layer] | None = None, include_partners: bool = False,
-            include_siblings: bool = False,
-            ancestor_layers: list[Layer] | None = None) -> list[Layer]:
+    def get_descendant_layers(
+        self,
+        level: int = 0,
+        layers: list[Layer] | None = None,
+        include_partners: bool = False,
+        include_siblings: bool = False,
+        ancestor_layers: list[Layer] | None = None
+    ) -> list[Layer]:
 
         people: list[Person]
 
@@ -905,8 +1025,10 @@ class Person:
 
 
     def get_layers(
-            self, include_partners: bool = False,
-            include_siblings: bool = False) -> list[Layer]:
+        self,
+        include_partners: bool = False,
+        include_siblings: bool = False
+    ) -> list[Layer]:
 
         ancestor_layers = self.get_ancestor_layers()
         descendant_layers = self.get_descendant_layers(
@@ -918,9 +1040,18 @@ class Person:
         return ancestor_layers + descendant_layers
 
 
-    def kinship_term(self, person: Person) -> str:
+    def kinship_term(
+        self,
+        person: Person
+    ) -> str:
 
-        def calc_term(short: int, diff: int, gender: Gender) -> str | None:
+
+        def calc_term(
+            short: int,
+            diff: int,
+            gender: Gender
+        ) -> str | None:
+
             match short, diff, gender:
                 case 0, 0, _:
                     return 'self'
@@ -982,8 +1113,13 @@ class Person:
                     return 'cousin'
             return None
 
+
         def calc_spousal_term(
-                short: int, diff: int, gender: Gender) -> str | None:
+            short: int,
+            diff: int,
+            gender: Gender
+        ) -> str | None:
+
             match short, diff,  gender:
                 case 0, 0, 'male':
                     return 'husband'
@@ -1023,8 +1159,13 @@ class Person:
                     return 'grandparent-in-law'
             return None
 
+
         def calc_affine_term(
-                short: int, diff: int, gender: Gender) -> str | None:
+            short: int,
+            diff: int,
+            gender: Gender
+        ) -> str | None:
+
             match short, diff, gender:
                 case 1, 0, 'male':
                     return 'brother-in-law'
@@ -1052,7 +1193,12 @@ class Person:
                     return 'great aunt by marriage'
             return None
 
-        def calc_extended_term(short: int, diff: int, gender: Gender) -> str:
+
+        def calc_extended_term(
+            short: int,
+            diff: int,
+            gender: Gender
+        ) -> str:
 
             p = self.family.inflect_engine
 
@@ -1082,6 +1228,7 @@ class Person:
                 term = f'{term} {removal} removed'
 
             return term
+
 
         prefix = ''
         term = None
@@ -1177,7 +1324,10 @@ class Person:
 class PersonEncoder(json.JSONEncoder):
 
 
-    def default(self, obj) -> PersonJSON | any:
+    def default(
+        self,
+        obj
+    ) -> PersonJSON | any:
 
         if isinstance(obj, Person):
 
@@ -1228,10 +1378,13 @@ class Relationship:
 
 
     def __init__(
-            self, subject: Person | int | None = None,
-            partner: Person | int | None = None, family: Family | None = None,
-            record: dict[str, RecordField] | None = None,
-            blank_record: bool = False) -> None:
+        self,
+        subject: Person | int | None = None,
+        partner: Person | int | None = None,
+        family: Family | None = None,
+        record: dict[str, RecordField] | None = None,
+        blank_record: bool = False
+    ) -> None:
 
         if not ((subject and partner) or record):
             raise ValueError('Insufficient data to describe relationship.')
@@ -1313,7 +1466,10 @@ class Relationship:
 
 
     @cached_property
-    def partner_description(self) -> PartnerDesc:
+    def partner_description(
+        self
+    ) -> PartnerDesc:
+
         match self.type, self.partner.gender:
             case 'marriage', 'male':
                 rel_type = 'husband'
@@ -1328,7 +1484,9 @@ class Relationship:
 
 
     @cached_property
-    def dates(self) -> str | None:
+    def dates(
+        self
+    ) -> str | None:
 
         someone_dead = any([person.dead for person in self.people])
 
@@ -1346,7 +1504,9 @@ class Relationship:
 
 
     @cached_property
-    def years(self) -> str | None:
+    def years(
+        self
+    ) -> str | None:
 
         someone_dead = any([person.dead for person in self.people])
 
@@ -1364,7 +1524,9 @@ class Relationship:
 
 
     @cached_property
-    def started(self) -> str | None:
+    def started(
+        self
+    ) -> str | None:
 
         if place := self.start_place:
             place = ' in ' + place
@@ -1373,31 +1535,41 @@ class Relationship:
 
 
     @cached_property
-    def ended(self) -> str | None:
+    def ended(
+        self
+    ) -> str | None:
 
         return ', '.join(filter(None, (self.end_date, self.end_type))) or None
 
 
     @cached_property
-    def is_ex(self) -> bool:
+    def is_ex(
+        self
+    ) -> bool:
 
         return self.end_type in ('divorce', 'separation')
 
 
     @cached_property
-    def ex_prefix(self) -> Literal['ex-', '']:
+    def ex_prefix(
+        self
+    ) -> Literal['ex-', '']:
 
         return 'ex-' if self.is_ex else ''
 
 
     @cached_property
-    def description(self) -> str | None:
+    def description(
+        self
+    ) -> str | None:
 
         return ', '.join(filter(None, (self.started, self.ended))) or None
 
 
     @cached_property
-    def children(self) -> list[Person]:
+    def children(
+        self
+    ) -> list[Person]:
 
         person_a, person_b = self.people
         family = person_a.family or person_b.family
@@ -1421,7 +1593,11 @@ class Relationship:
 
 
     def end_type_description(
-            self, noun: bool = True, until: bool = False) -> str | None:
+        self,
+        noun: bool = True,
+        until: bool = False
+    ) -> str | None:
+
 
         def death_description() -> str:
 
@@ -1449,6 +1625,7 @@ class Relationship:
                     return f'the death of {per_a.name}'
                 case False, _, _:
                     return f'the death of {per_b.name}'
+
 
         if self.end_type == 'death':
             description = death_description()
@@ -1489,7 +1666,9 @@ class Database:
     and_condition: str
 
 
-    def __init__(self) -> None:
+    def __init__(
+        self
+    ) -> None:
 
         self.db_config = load_config('postgresql')
         self.app_config = load_config('family_tree')
@@ -1505,7 +1684,9 @@ class Database:
 
 
     @staticmethod
-    def sanitize_field(value: any) -> RecordField:
+    def sanitize_field(
+        value: any
+    ) -> RecordField:
         """Return the field in a format suitable for JSON export."""
 
         if not isinstance(value, field_types):
@@ -1515,7 +1696,9 @@ class Database:
 
 
     @staticmethod
-    def tuple_from(iter: Iterable[str]) -> tuple[str, ...]:
+    def tuple_from(
+        iter: Iterable[str]
+    ) -> tuple[str, ...]:
         """Convert an iterable of strings to a tuple of strings"""
 
         if isinstance(iter, str) or not isinstance(iter, Iterable):
@@ -1527,8 +1710,10 @@ class Database:
         
 
     def get_all_records(
-            self, sql: str,
-            params: Iterable[str] = ()) -> list[dict[str, RecordField]]:
+        self,
+        sql: str,
+        params: Iterable[str] = ()
+    ) -> list[dict[str, RecordField]]:
         """Return the entire result of the supplied SQL query as a list."""
 
         params_tuple = Database.tuple_from(params)
@@ -1550,8 +1735,11 @@ class Database:
 
 
     def record_generator(
-            self, sql: str, params: Iterable[str] = (),
-            size: int = 100) -> Generator[dict[str, RecordField], None, None]:
+        self,
+        sql: str,
+        params: Iterable[str] = (),
+        size: int = 100
+    ) -> Generator[dict[str, RecordField], None, None]:
         """Create an optionally batched generator from the supplied SQL."""
 
         params_tuple = Database.tuple_from(params)
@@ -1573,7 +1761,9 @@ class Database:
             print(e)
 
 
-    def get_ids(self) -> tuple[int, ...]:
+    def get_ids(
+        self
+    ) -> tuple[int, ...]:
         """Return a list of all active IDs in the `people` table."""
 
         sql = f"""SELECT person_id
@@ -1585,7 +1775,9 @@ class Database:
 
 
     def get_people(
-            self, match: str | None = None) -> list[dict[str, RecordField]]:
+        self,
+        match: str | None = None
+    ) -> list[dict[str, RecordField]]:
         """If `match` is supplied, return all people with names
            containing `match`.
            Otherwise, return the entire contents of the `people` table."""
@@ -1629,7 +1821,10 @@ class Database:
         return results
 
 
-    def get_person(self, match: int | str) -> dict[str, RecordField]:
+    def get_person(
+        self,
+        match: int | str
+    ) -> dict[str, RecordField]:
         """For a given ID or name, return a single matching person."""
 
         if (isinstance(match, int) or
@@ -1675,7 +1870,10 @@ class Database:
         return result[0]
 
 
-    def get_children(self, id: int) -> list[dict[str, RecordField]]:
+    def get_children(
+        self,
+        id: int
+    ) -> list[dict[str, RecordField]]:
         """Return a list of the children of a given person."""
 
         sql = """SELECT *
@@ -1689,7 +1887,10 @@ class Database:
         return self.get_all_records(sql, (id, id))
 
 
-    def get_child_ids(self, id: int) -> tuple[int, ...]:
+    def get_child_ids(
+        self,
+        id: int
+    ) -> tuple[int, ...]:
         """Return a list of the IDs of the children of a specified person."""
 
         sql = """SELECT person_id
@@ -1705,7 +1906,9 @@ class Database:
         return tuple(x['person_id'] for x in records)
 
 
-    def get_parent_child_id_pairs(self) -> dict[int, list[int]]:
+    def get_parent_child_id_pairs(
+        self
+    ) -> dict[int, list[int]]:
         """Return all pairs of parent and child ID numbers."""
 
         sql = """(SELECT father_id AS parent_id,
@@ -1733,7 +1936,10 @@ class Database:
         return dict(output)
 
 
-    def get_siblings(self, id: int) -> list[dict[str, RecordField]]:
+    def get_siblings(
+        self,
+        id: int
+    ) -> list[dict[str, RecordField]]:
         """Return a list of people who share one or both of the given
            person's parents."""
 
@@ -1752,7 +1958,10 @@ class Database:
         return self.get_all_records(sql, id)
 
 
-    def get_full_siblings(self, id: int) -> list[dict[str, RecordField]]:
+    def get_full_siblings(
+        self,
+        id: int
+    ) -> list[dict[str, RecordField]]:
         """Returns a list of people who share both the given person's
            parents."""
 
@@ -1773,7 +1982,10 @@ class Database:
         return self.get_all_records(sql, id)
 
 
-    def get_half_siblings(self, id: int) -> list[dict[str, RecordField]]:
+    def get_half_siblings(
+        self,
+        id: int
+    ) -> list[dict[str, RecordField]]:
         """Return a list of people who share exactly one of the given
            person's parents."""
 
@@ -1794,7 +2006,10 @@ class Database:
         return self.get_all_records(sql, id)
 
 
-    def get_line(self, id: int) -> RecordLine:
+    def get_line(
+        self,
+        id: int
+    ) -> RecordLine:
         """Return all ancestors and descendants of a given person."""
 
         person: RecordLine = self.get_person(id)
@@ -1814,7 +2029,10 @@ class Database:
         return person
 
 
-    def get_descendants(self, id: int) -> RecordLine:
+    def get_descendants(
+        self,
+        id: int
+    ) -> RecordLine:
         """Return all descendants of a given person
            nested within their parents."""
 
@@ -1828,7 +2046,10 @@ class Database:
         return person
 
 
-    def get_descendants_flat(self, id: int) -> list[dict[str, RecordField]]:
+    def get_descendants_flat(
+        self,
+        id: int
+    ) -> list[dict[str, RecordField]]:
         """Return all descendants of a given person as a flat list."""
 
         children = self.get_children(id)
@@ -1840,7 +2061,10 @@ class Database:
         return line
 
 
-    def get_ancestors(self, id: int) -> RecordLine:
+    def get_ancestors(
+        self,
+        id: int
+    ) -> RecordLine:
         """Return all ancestors of a given person
            nested within their children."""
 
@@ -1863,7 +2087,10 @@ class Database:
         return person
 
 
-    def get_ancestors_flat(self, id: int) -> list[dict[str, RecordField]]:
+    def get_ancestors_flat(
+        self,
+        id: int
+    ) -> list[dict[str, RecordField]]:
         """Return all ancestors of a given person as a flat list."""
 
         try:
@@ -1883,7 +2110,10 @@ class Database:
         return line
 
 
-    def get_partners(self, id: int) -> list[dict[str, RecordField]]:
+    def get_partners(
+        self,
+        id: int
+    ) -> list[dict[str, RecordField]]:
         """Get partners of any type for the given person."""
 
         sql = """SELECT *
@@ -1900,7 +2130,10 @@ class Database:
 
 
     def get_relationship(
-            self, person_a: int, person_b: int) -> dict[str, RecordField]:
+        self,
+        person_a: int,
+        person_b: int
+    ) -> dict[str, RecordField]:
         """Get the relationship record for two given people."""
 
         sql = """SELECT *
@@ -1918,7 +2151,9 @@ class Database:
         return result
 
 
-    def get_relationships(self) -> list[dict[str, RecordField]]:
+    def get_relationships(
+        self
+    ) -> list[dict[str, RecordField]]:
         """Get all relationships."""
 
         if self.exclude_spurious:
