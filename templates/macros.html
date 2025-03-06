@@ -11,7 +11,7 @@
     <a href="{{ url_for('person_page', id=person.id) }}">{{ person.name }}</a>
     {%- if (dates == 'b') and person.year_of_birth
       %} <span class="nowrap">(b. {{ person.year_of_birth }})</span>
-    {%- elif dates and person.years 
+    {%- elif dates and person.years
       %} <span class="nowrap">({{ person.years }})</span>{% endif -%}
     {% if person.spurious %}</span>{% endif -%}
 {%- endmacro %}
