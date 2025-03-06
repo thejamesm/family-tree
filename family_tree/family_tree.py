@@ -18,8 +18,6 @@ from .database import Database, RecordField, SpuriousConnection
 
 
 config: ReadOnlyDict[str, str] = Config['family_tree']
-foo = config['max_great_levels']
-bar = config.__getitem__('max_great_levels')
 
 type Gender = Literal['male', 'female'] | None
 type PartnerDesc = Literal['husband', 'wife', 'spouse', 'partner',
@@ -709,7 +707,7 @@ class Person:
 
         if not (family := self.family):
             family = Family()
-            
+
         records = family.db.get_full_siblings(self.id)
 
         return [Person(record=record, family=family) for record in records]
@@ -1304,7 +1302,7 @@ class Person:
                             else:
                                 suffix = f'’s {rel.ex_prefix}partner'
                             break
-                            
+
             if not kinship:
                 return 'no blood relation'
 
