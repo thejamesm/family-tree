@@ -6,8 +6,7 @@ from markupsafe import escape
 from flask_login import (LoginManager, UserMixin, login_required, login_user,
                          logout_user)
 
-from family_tree import Family, Person, SpuriousConnection
-from config import load_config
+from family_tree import Family, Person, SpuriousConnection, load_config
 from filters import parse_notes
 
 class User(UserMixin):
@@ -147,6 +146,6 @@ def logout():
 @app.errorhandler(404)
 def no_route(e):
     return render_template('no_route.html')
-    
+
 def person_not_found():
     return render_template('person_not_found.html')
