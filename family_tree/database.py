@@ -6,7 +6,7 @@ from collections import defaultdict
 from typing import Generator, Iterable, cast
 
 
-from .config import load_config
+from .config import Config, ReadOnlyDict
 
 
 field_types = str | int | float | bool | list | None
@@ -25,8 +25,8 @@ class Database:
 
     MPHONE_LEN: int = 15
 
-    db_config: dict[str, str]
-    app_config: dict[str, str]
+    db_config: ReadOnlyDict[str, str]
+    app_config: ReadOnlyDict[str, str]
 
     exclude_spurious: bool
     where_condition: str
@@ -37,8 +37,8 @@ class Database:
         self
     ) -> None:
 
-        self.db_config = load_config('postgresql')
-        self.app_config = load_config('family_tree')
+        self.db_config = Config['postgresql']
+        self.app_config = Config['family_tree']
 
         if self.app_config['exclude_distant_history'].lower() == 'true':
             self.exclude_spurious = True

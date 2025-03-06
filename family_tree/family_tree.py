@@ -13,12 +13,13 @@ from typing import Literal, TypedDict
 
 import inflect
 
-from .database import Database, RecordField
-from .config import load_config
-from family_tree.database import SpuriousConnection
+from .config import Config, ReadOnlyDict
+from .database import Database, RecordField, SpuriousConnection
 
 
-app_config: dict[str, str] = load_config('family_tree')
+config: ReadOnlyDict[str, str] = Config['family_tree']
+foo = config['max_great_levels']
+bar = config.__getitem__('max_great_levels')
 
 type Gender = Literal['male', 'female'] | None
 type PartnerDesc = Literal['husband', 'wife', 'spouse', 'partner',
@@ -1201,7 +1202,7 @@ class Person:
 
             if short in (0, 1):
                 levels = abs(diff) - 2
-                if levels <= int(app_config['max_great_levels']):
+                if levels <= int(config['max_great_levels']):
                     prefix = '-'.join(('great',) * levels) + ' grand'
                 else:
                     prefix = (p.number_to_words(p.ordinal(levels)) +

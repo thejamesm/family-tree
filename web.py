@@ -6,7 +6,7 @@ from markupsafe import escape
 from flask_login import (LoginManager, UserMixin, login_required, login_user,
                          logout_user)
 
-from family_tree import Family, Person, SpuriousConnection, load_config
+from family_tree import Family, Person, SpuriousConnection, Config, ReadOnlyDict
 from filters import parse_notes
 
 class User(UserMixin):
@@ -23,11 +23,11 @@ class SecuredImagesFlask(Flask):
     def asset_loader(self, filename):
         return super().send_static_file(filename)
 
-config = load_config('authentication')
+auth: ReadOnlyDict[str, str] = Config['authentication']
 
 app = SecuredImagesFlask(__name__)
 
-app.secret_key = config['secret_key']
+app.secret_key = auth['secret_key']
 app.config['USE_SESSION_FOR_NEXT'] = True
 app.jinja_env.filters['parse_notes'] = parse_notes
 
@@ -129,7 +129,7 @@ def password_page():
 @app.route('/password', methods=['POST'])
 def check_password():
     password = request.form.get('password')
-    if password == config['password']:
+    if password == auth['password']:
         user = User()
         login_user(user)
         if 'next' in session:
